@@ -1,0 +1,639 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>狼人回归系统（ReturnActivity）技术说明文档</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif; line-height: 1.8; color: #2c3e50; background: #f5f7fa; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 50px 60px; }
+        h1 { font-size: 2em; color: #1a1a2e; border-bottom: 3px solid #e74c3c; padding-bottom: 15px; margin-bottom: 30px; }
+        h2 { font-size: 1.5em; color: #2d3436; margin-top: 40px; margin-bottom: 20px; padding-left: 12px; border-left: 4px solid #e74c3c; }
+        h3 { font-size: 1.2em; color: #636e72; margin-top: 25px; margin-bottom: 12px; }
+        h4 { font-size: 1.05em; color: #2d3436; margin-top: 20px; margin-bottom: 10px; }
+        p { margin-bottom: 12px; }
+        hr { border: none; border-top: 1px solid #dfe6e9; margin: 30px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.95em; }
+        th { background: #e74c3c; color: white; padding: 10px 14px; text-align: left; font-weight: 600; }
+        td { padding: 9px 14px; border-bottom: 1px solid #ecf0f1; }
+        tr:nth-child(even) { background: #f8f9fa; }
+        tr:hover { background: #fdecea; }
+        code { background: #f1f2f6; color: #c0392b; padding: 2px 6px; border-radius: 4px; font-family: "Fira Code", "Consolas", monospace; font-size: 0.9em; }
+        pre { background: #2d3436; color: #dfe6e9; padding: 18px 22px; border-radius: 8px; overflow-x: auto; margin: 15px 0; font-size: 0.9em; line-height: 1.6; }
+        pre code { background: none; color: #dfe6e9; padding: 0; }
+        .mermaid { background: #fafbfc; border: 1px solid #e1e4e8; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center; }
+        strong { color: #2d3436; }
+        ul, ol { margin: 10px 0 10px 24px; }
+        li { margin-bottom: 6px; }
+        .highlight-box { background: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%); border-left: 4px solid #e74c3c; padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 15px 0; }
+        .tip-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 18px; border-radius: 0 8px 8px 0; margin: 15px 0; }
+        .info-box { background: #e8f4fd; border-left: 4px solid #0984e3; padding: 12px 18px; border-radius: 0 8px 8px 0; margin: 15px 0; }
+        .toc { background: #fff5f5; border: 1px solid #e1e4e8; border-radius: 8px; padding: 20px 24px; margin: 20px 0 30px 0; }
+        .toc h3 { margin-top: 0; color: #e74c3c; }
+        .toc ul { list-style: none; margin-left: 0; }
+        .toc li { margin-bottom: 4px; }
+        .toc a { color: #e74c3c; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .toc ul ul { margin-left: 20px; }
+        .badge { display: inline-block; background: #e74c3c; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8em; margin-right: 6px; }
+        .badge-wolf { background: #c0392b; }
+        .badge-civil { background: #0984e3; }
+        .badge-neutral { background: #e67e22; }
+        .badge-state { background: #6c5ce7; }
+        .badge-unlock { background: #636e72; }
+        .badge-ready { background: #00b894; }
+        .badge-done { background: #00cec9; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 15px 0; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 15px 0; }
+        .grid-item { background: #fafbfc; border: 1px solid #e1e4e8; border-radius: 8px; padding: 16px; }
+        .grid-item h4 { margin-top: 0; color: #e74c3c; }
+        .module-card { background: #fafbfc; border: 1px solid #e1e4e8; border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+        .module-card h4 { margin-top: 0; font-size: 1.1em; color: #e74c3c; border-bottom: 2px dashed #e1e4e8; padding-bottom: 10px; margin-bottom: 12px; }
+        .module-card .meta { color: #636e72; font-size: 0.92em; margin-bottom: 8px; }
+        .module-card .meta strong { color: #2d3436; }
+        .file-tree { background: #2d3436; color: #dfe6e9; padding: 18px 22px; border-radius: 8px; font-family: "Fira Code", monospace; font-size: 0.88em; line-height: 1.8; margin: 15px 0; overflow-x: auto; }
+        .file-tree .dir { color: #74b9ff; }
+        .file-tree .file { color: #ff7675; }
+        .file-tree .comment { color: #b2bec3; }
+        .state-flow { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 20px 0; padding: 20px; background: #fafbfc; border-radius: 8px; border: 1px solid #e1e4e8; }
+        .state-box { display: inline-block; background: #fff; border: 2px solid #ddd; border-radius: 8px; padding: 10px 16px; text-align: center; min-width: 100px; }
+        .state-box.active { border-color: #e74c3c; background: #fff5f5; }
+        .state-arrow { font-size: 1.5em; color: #b2bec3; }
+        .reward-card { display: inline-block; background: linear-gradient(135deg, #fff5f5, #fff); border: 2px solid #e74c3c; border-radius: 12px; padding: 16px 20px; text-align: center; min-width: 150px; margin: 8px; }
+        .reward-card .reward-title { font-weight: 700; color: #e74c3c; margin-bottom: 6px; }
+        .reward-card .reward-desc { font-size: 0.9em; color: #636e72; }
+        .reward-card .reward-tag { display: inline-block; background: #e74c3c; color: #fff; font-size: 0.75em; padding: 2px 8px; border-radius: 10px; margin-top: 6px; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<h1>&#x1F43A; 狼人回归系统（ReturnActivity）技术说明文档</h1>
+<p style="color:#636e72; font-size:0.9em;">&#x1F4CB; 版本：v1.0 &nbsp;|&nbsp; &#x1F4C5; 2026-03-12 &nbsp;|&nbsp; 技术栈：UE4 + UnLua + Lua MVC 架构</p>
+
+<div class="toc">
+    <h3>&#x1F4D1; 目录</h3>
+    <ul>
+        <li><a href="#s1">一、系统概述</a></li>
+        <li><a href="#s2">二、代码文件结构</a></li>
+        <li><a href="#s3">三、核心功能模块</a>
+            <ul>
+                <li><a href="#s3-1">3.1 回归欢迎弹窗（PopupView）</a></li>
+                <li><a href="#s3-2">3.2 回归活动主界面（MainView）</a></li>
+                <li><a href="#s3-3">3.3 奖励预览与领取界面（RewardView）</a></li>
+                <li><a href="#s3-4">3.4 身份奖励预览界面（IndetityRewardView）</a></li>
+                <li><a href="#s3-5">3.5 身份奖励子项组件（IdentityItem）</a></li>
+                <li><a href="#s3-6">3.6 奖励选择子项组件（PickItem）</a></li>
+            </ul>
+        </li>
+        <li><a href="#s4">四、关键技术点</a></li>
+        <li><a href="#s5">五、数据埋点一览</a></li>
+        <li><a href="#s6">六、界面交互流程图</a></li>
+    </ul>
+</div>
+
+<!-- ═══════ 一、系统概述 ═══════ -->
+<h2 id="s1">&#x1F4CB; 一、系统概述</h2>
+<p>狼人回归系统（ReturnActivity）是为「狼人杀」玩法中的回归玩家量身设计的限时活动系统。其核心目标是通过专属奖励机制吸引流失玩家回归，提升用户留存率。</p>
+
+<div class="highlight-box">
+    <strong>&#x1F3AF; 核心设计要点：</strong><br>
+    &#x25CF; <strong>触发条件：</strong>回归玩家登录游戏后自动弹出活动弹窗<br>
+    &#x25CF; <strong>奖励机制：</strong>三档递进式奖励，完成对局后逐步解锁<br>
+    &#x25CF; <strong>技术栈：</strong>UE4 + UnLua + Lua MVC 架构
+</div>
+
+<h3>三档奖励概览</h3>
+<div style="text-align:center; margin: 20px 0;">
+    <div class="reward-card">
+        <div class="reward-title">&#x1F3AC; 第1档</div>
+        <div class="reward-desc">限时报告动画</div>
+        <div class="reward-tag">限时</div>
+    </div>
+    <span style="font-size:1.5em; color:#b2bec3; vertical-align:middle;">&#x27A1;&#xFE0F;</span>
+    <div class="reward-card">
+        <div class="reward-title">&#x2694;&#xFE0F; 第2档</div>
+        <div class="reward-desc">限时攻击动画</div>
+        <div class="reward-tag">限时</div>
+    </div>
+    <span style="font-size:1.5em; color:#b2bec3; vertical-align:middle;">&#x27A1;&#xFE0F;</span>
+    <div class="reward-card" style="border-color:#c0392b; background:linear-gradient(135deg, #ffeaa7, #fff);">
+        <div class="reward-title" style="color:#c0392b;">&#x1F43A; 第3档</div>
+        <div class="reward-desc">永久狼人身份</div>
+        <div class="reward-tag" style="background:#c0392b;">永久 &#x2B50; 最高价值</div>
+    </div>
+</div>
+<hr>
+
+<!-- ═══════ 二、代码文件结构 ═══════ -->
+<h2 id="s2">&#x1F4C2; 二、代码文件结构</h2>
+<div class="file-tree">
+    <span class="dir">ReturnActivity/</span><br>
+    &#x2502;<br>
+    &#x251C;&#x2500;&#x2500; <span class="file">UI_Preparations_ReturnActivity_PopupView.lua</span><br>
+    &#x2502;&nbsp;&nbsp;&nbsp;&#x2514;&#x2500;&#x2500; <span class="comment">回归欢迎弹窗，含贝塞尔曲线飞行动画</span><br>
+    &#x2502;<br>
+    &#x251C;&#x2500;&#x2500; <span class="file">UI_Preparations_ReturnActivity_MainView.lua</span><br>
+    &#x2502;&nbsp;&nbsp;&nbsp;&#x2514;&#x2500;&#x2500; <span class="comment">活动主界面，三档奖励总览与状态管理</span><br>
+    &#x2502;<br>
+    &#x251C;&#x2500;&#x2500; <span class="file">UI_Preparations_ReturnActivity_RewardView.lua</span><br>
+    &#x2502;&nbsp;&nbsp;&nbsp;&#x2514;&#x2500;&#x2500; <span class="comment">第1/2档奖励的预览与领取界面</span><br>
+    &#x2502;<br>
+    &#x251C;&#x2500;&#x2500; <span class="file">UI_Preparations_ReturnActivity_IndetityRewardView.lua</span><br>
+    &#x2502;&nbsp;&nbsp;&nbsp;&#x2514;&#x2500;&#x2500; <span class="comment">第3档身份奖励专属预览界面</span><br>
+    &#x2502;<br>
+    &#x251C;&#x2500;&#x2500; <span class="file">UI_Preparations_ReturnActivity_IdentityItem.lua</span><br>
+    &#x2502;&nbsp;&nbsp;&nbsp;&#x2514;&#x2500;&#x2500; <span class="comment">身份奖励列表的单项组件</span><br>
+    &#x2502;<br>
+    &#x2514;&#x2500;&#x2500; <span class="file">UI_Preparations_ReturnActivity_PickItem.lua</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&#x2514;&#x2500;&#x2500; <span class="comment">奖励选择列表的单项组件（含分包下载检测）</span>
+</div>
+<hr>
+
+<!-- ═══════ 三、核心功能模块 ═══════ -->
+<h2 id="s3">&#x2699;&#xFE0F; 三、核心功能模块</h2>
+
+<!-- 3.1 PopupView -->
+<div class="module-card" id="s3-1">
+    <h4>&#x1F4CC; 3.1 回归欢迎弹窗（PopupView）</h4>
+    <p class="meta"><strong>文件：</strong><code>UI_Preparations_ReturnActivity_PopupView.lua</code></p>
+
+    <h4>功能概述</h4>
+    <p>回归玩家登录后弹出的全屏欢迎界面，展示活动说明并引导玩家进入活动。</p>
+
+    <h4>界面元素</h4>
+    <ul>
+        <li>活动名称与图标</li>
+        <li>5条活动说明文案（<code>w_txt_Tip1</code> ~ <code>w_txt_Tip5</code>）</li>
+        <li><strong>"前往领取"</strong> 按钮 —— 播放飞行动画后跳转至主界面</li>
+        <li><strong>"查看公告"</strong> 按钮 —— 打开狼村公告界面</li>
+    </ul>
+
+    <h4>核心交互 — 飞行动画流程</h4>
+    <div class="highlight-box">
+        <ol>
+            <li>用户点击 "前往领取"</li>
+            <li>播放缩小动画（<code>UMG_small</code>）</li>
+            <li>隐藏模糊背景层</li>
+            <li>延迟 0.3s 后启动贝塞尔曲线飞行动画</li>
+            <li>图标沿弧线从弹窗中心飞向活动入口按钮位置</li>
+            <li>飞行结束 → 关闭弹窗 → 刷新活动入口显示</li>
+        </ol>
+    </div>
+
+    <h4>技术亮点</h4>
+    <div class="info-box">
+        <strong>二次贝塞尔曲线插值：</strong><code>B(t) = (1-t)²·P0 + 2t(1-t)·P1 + t²·P2</code><br>
+        <strong>跨界面坐标转换：</strong><code>ComputeRelativeLocalPos</code> 统一坐标空间<br>
+        <strong>目标Widget获取：</strong><code>GetTargetWidget</code> 通过 UIManager 获取目标界面 Widget 引用
+    </div>
+
+    <h4>数据埋点</h4>
+    <table>
+        <tr><th>埋点ID</th><th>触发动作</th></tr>
+        <tr><td><code>231020</code></td><td>点击 "前往领取"</td></tr>
+        <tr><td><code>231021</code></td><td>点击 "查看公告"</td></tr>
+    </table>
+</div>
+
+<!-- 3.2 MainView -->
+<div class="module-card" id="s3-2">
+    <h4>&#x1F4CC; 3.2 回归活动主界面（MainView）</h4>
+    <p class="meta"><strong>文件：</strong><code>UI_Preparations_ReturnActivity_MainView.lua</code></p>
+
+    <h4>功能概述</h4>
+    <p>活动核心界面，展示三档回归奖励的总览信息及领取状态。</p>
+
+    <h4>界面布局</h4>
+    <ul>
+        <li><strong>顶部：</strong>活动时间（<code>open_ts</code> ~ <code>end_ts</code> 格式化显示）</li>
+        <li><strong>中部：</strong>三个奖励卡片
+            <ul>
+                <li>奖励1（<code>w_RewardItem_1</code>）—— 限时报告动画</li>
+                <li>奖励2（<code>w_RewardItem_2</code>）—— 限时攻击动画</li>
+                <li>奖励3（<code>w_RewardItem_3</code>）—— 永久狼人身份（大尺寸卡片）</li>
+            </ul>
+        </li>
+        <li>每个卡片含进度描述文字、状态按钮</li>
+    </ul>
+
+    <h4>奖励状态机</h4>
+    <div class="state-flow">
+        <div class="state-box">
+            <div><span class="badge badge-unlock">state = -1</span></div>
+            <div style="margin-top:4px;">未解锁<br><small>初始态，显示"待领取"</small></div>
+        </div>
+        <div class="state-arrow">&#x27A1;&#xFE0F;</div>
+        <div class="state-box">
+            <div><span class="badge badge-state">state = 0</span></div>
+            <div style="margin-top:4px;">已解锁<br><small>完成对局，显示进度提示</small></div>
+        </div>
+        <div class="state-arrow">&#x27A1;&#xFE0F;</div>
+        <div class="state-box active">
+            <div><span class="badge badge-ready">state = 1</span></div>
+            <div style="margin-top:4px;">可领取<br><small>满足条件，显示"领取"</small></div>
+        </div>
+        <div class="state-arrow">&#x27A1;&#xFE0F;</div>
+        <div class="state-box">
+            <div><span class="badge badge-done">state = 2</span></div>
+            <div style="margin-top:4px;">已领取<br><small>播放 UMG_OK 勾选动画</small></div>
+        </div>
+    </div>
+    <p>使用 <code>WidgetSwitcher</code>（<code>w_switcher_BtnState</code>）根据状态切换按钮显示。</p>
+
+    <h4>核心交互</h4>
+    <ul>
+        <li>点击 <strong>"解锁态"</strong> 按钮（<code>w_btn_UnLock</code>）→ 打开奖励预览界面</li>
+        <li>点击 <strong>"可领取态"</strong> 按钮（<code>w_btn_Locked</code>）→ 打开领取操作界面</li>
+        <li>奖励3的领取标题文案支持自定义替换</li>
+        <li>领取前校验分包下载状态</li>
+    </ul>
+
+    <h4>事件监听</h4>
+    <table>
+        <tr><th>事件名称</th><th>说明</th></tr>
+        <tr><td><code>PreparationsModel_RefreshReturnActivityMainViewAllReward</code></td><td>全量刷新所有奖励</td></tr>
+        <tr><td><code>PreparationsModel_RefreshReturnActivityMainView</code></td><td>单项刷新指定奖励</td></tr>
+        <tr><td><code>PreparationsModel_CloseAllReturnActivityView</code></td><td>关闭全部回归界面</td></tr>
+    </table>
+
+    <h4>数据埋点</h4>
+    <table>
+        <tr><th>埋点ID</th><th>触发动作</th><th>附加参数</th></tr>
+        <tr><td><code>231022</code></td><td>点击奖励项</td><td><code>index</code></td></tr>
+    </table>
+</div>
+
+<!-- 3.3 RewardView -->
+<div class="module-card" id="s3-3">
+    <h4>&#x1F4CC; 3.3 奖励预览与领取界面（RewardView）</h4>
+    <p class="meta"><strong>文件：</strong><code>UI_Preparations_ReturnActivity_RewardView.lua</code></p>
+
+    <h4>功能概述</h4>
+    <p>用于预览和领取第1档（报告动画）、第2档（攻击动画）奖励的二级界面。</p>
+
+    <h4>双模式设计</h4>
+    <div class="grid-2">
+        <div class="grid-item">
+            <h4>&#x1F441; 预览模式</h4>
+            <p><code>isOperate = false</code></p>
+            <p>仅展示奖励内容，不可操作</p>
+        </div>
+        <div class="grid-item">
+            <h4>&#x270F;&#xFE0F; 领取模式</h4>
+            <p><code>isOperate = true</code></p>
+            <p>展示选择与确认按钮，可操作领取</p>
+        </div>
+    </div>
+
+    <h4>数据处理流程</h4>
+    <div class="highlight-box">
+        <ol>
+            <li>从 <code>select_list</code> 解析奖励物品 ID 和数量</li>
+            <li>通过 <code>BagModel:GetItemConfigById</code> 获取物品配置</li>
+            <li>判断物品是否已拥有（<code>maxNum==1</code> 时检查背包）</li>
+            <li>通过 <code>WolfKillComeBackTable</code> 获取物品过期天数</li>
+            <li>区分物品类型：动画类 / 其他类</li>
+        </ol>
+    </div>
+
+    <h4>排序规则</h4>
+    <table>
+        <tr><th>档位</th><th>排序优先级</th></tr>
+        <tr><td>第1/2档</td><td>动画类 &gt; 其他类 &gt; 已拥有 &gt; 未拥有，同类按 ID 升序</td></tr>
+        <tr><td>第3档</td><td>身份类 &gt; 其他类，同类按 ID 升序</td></tr>
+    </table>
+
+    <h4>选择与领取流程</h4>
+    <ol>
+        <li>在 <code>UListView</code>（<code>w_list_Reward</code>）中选择奖励（最多 <code>MaxPickNum = 1</code> 个）</li>
+        <li>选满 → 显示确认按钮 &nbsp;|&nbsp; 未选满 → 显示禁用按钮</li>
+        <li>确认后：
+            <ul>
+                <li>更新红点状态（<code>E_RDT_TYPE.PlayerReturn</code>）</li>
+                <li>调用 <code>PreparationsModel:GetReturnActivityReward</code> 发送领取请求</li>
+                <li>关闭当前界面</li>
+            </ul>
+        </li>
+    </ol>
+
+    <h4>事件监听</h4>
+    <table>
+        <tr><th>事件名称</th><th>说明</th></tr>
+        <tr><td><code>BagModel_PackPick_Changed</code></td><td>物品选择变更</td></tr>
+        <tr><td><code>BagModel_BagUsePropItemRsp</code></td><td>使用物品响应</td></tr>
+        <tr><td><code>BagModel_ItemPackagePickPickedNumRsp</code></td><td>已领取数量响应</td></tr>
+        <tr><td><code>PreparationsModel_CloseAllReturnActivityView</code></td><td>关闭全部回归界面</td></tr>
+    </table>
+
+    <h4>数据埋点</h4>
+    <table>
+        <tr><th>埋点ID</th><th>触发动作</th><th>附加参数</th></tr>
+        <tr><td><code>231023</code></td><td>打开奖励预览</td><td><code>index</code>，物品ID列表</td></tr>
+    </table>
+</div>
+
+<!-- 3.4 IndetityRewardView -->
+<div class="module-card" id="s3-4">
+    <h4>&#x1F4CC; 3.4 身份奖励预览界面（IndetityRewardView）</h4>
+    <p class="meta"><strong>文件：</strong><code>UI_Preparations_ReturnActivity_IndetityRewardView.lua</code></p>
+
+    <h4>功能概述</h4>
+    <p>专为第3档 "永久狼人身份" 奖励设计的预览界面（仅预览，不在此界面直接领取）。</p>
+
+    <h4>界面元素</h4>
+    <ul>
+        <li><code>UListView</code>（<code>w_list_Indentity</code>）展示身份列表</li>
+        <li>底部显示说明提示文案</li>
+    </ul>
+
+    <h4>数据处理</h4>
+    <div class="info-box">
+        &#x25CF; 从 <code>select_list</code> 解析物品数据<br>
+        &#x25CF; 使用 <code>isIdentify</code> 函数判断物品是否为身份类型（<code>ItemType_NR3E_Identity</code>）<br>
+        &#x25CF; 排序规则：身份类型优先 &gt; 其他类型，同类按 ID 升序<br>
+        &#x25CF; 每项数据结构：<code>{ itemId, itemNum, itemTypeSort, bHasItem, expireDay }</code>
+    </div>
+
+    <h4>事件监听</h4>
+    <table>
+        <tr><th>事件名称</th><th>说明</th></tr>
+        <tr><td><code>PreparationsModel_CloseAllReturnActivityView</code></td><td>关闭全部回归界面</td></tr>
+    </table>
+
+    <h4>数据埋点</h4>
+    <table>
+        <tr><th>埋点ID</th><th>触发动作</th><th>附加参数</th></tr>
+        <tr><td><code>231023</code></td><td>打开身份预览</td><td><code>index</code>，物品ID列表</td></tr>
+    </table>
+</div>
+
+<!-- 3.5 IdentityItem -->
+<div class="module-card" id="s3-5">
+    <h4>&#x1F4CC; 3.5 身份奖励子项组件（IdentityItem）</h4>
+    <p class="meta"><strong>文件：</strong><code>UI_Preparations_ReturnActivity_IdentityItem.lua</code></p>
+
+    <h4>功能概述</h4>
+    <p>身份奖励列表中的单个子项 UI 组件，根据阵营显示差异化样式。</p>
+
+    <h4>阵营颜色映射</h4>
+    <table>
+        <tr><th>阵营</th><th>faction</th><th>文字颜色 (R, G, B)</th><th>示例</th></tr>
+        <tr>
+            <td><span class="badge badge-wolf">狼人阵营</span></td>
+            <td><code>1</code></td>
+            <td><code>(1.000, 0.076, 0.076)</code></td>
+            <td style="color:rgb(255,19,19); font-weight:700;">&#x25A0; 红色</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-civil">平民阵营</span></td>
+            <td><code>2</code></td>
+            <td><code>(0.054, 0.445, 0.947)</code></td>
+            <td style="color:rgb(14,113,241); font-weight:700;">&#x25A0; 蓝色</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-neutral">中立阵营</span></td>
+            <td><code>3</code></td>
+            <td><code>(0.982, 0.418, 0.017)</code></td>
+            <td style="color:rgb(250,107,4); font-weight:700;">&#x25A0; 橙色</td>
+        </tr>
+    </table>
+
+    <h4>数据来源</h4>
+    <ul>
+        <li><code>NR3E3VocationTable</code> —— 获取职业数据</li>
+        <li><code>Identity_ItemUnlock</code> —— 映射物品ID到阵营/角色/描述</li>
+        <li><code>AddWidget</code> 嵌入 <code>UI_CommonComp_PropItemMin</code> 道具展示组件</li>
+        <li>道具配置：<code>ItemId</code>、<code>ItemNum</code>、<code>ExpireDays</code> 及显示选项</li>
+    </ul>
+</div>
+
+<!-- 3.6 PickItem -->
+<div class="module-card" id="s3-6">
+    <h4>&#x1F4CC; 3.6 奖励选择子项组件（PickItem）</h4>
+    <p class="meta"><strong>文件：</strong><code>UI_Preparations_ReturnActivity_PickItem.lua</code></p>
+
+    <h4>功能概述</h4>
+    <p>奖励选择列表中的单项组件，继承自 <code>UI_Bag_GiftPackPickItem</code> 礼包选择基类。</p>
+
+    <h4>基础功能（继承自基类）</h4>
+    <ul>
+        <li>加减按钮（<code>w_btn_Add</code> / <code>w_btn_Sub</code>）及禁用态切换</li>
+        <li>物品名称、道具图标、选择数量/最大数量显示</li>
+        <li>已拥有状态（<code>w_overlay_Got</code>）和选中状态（<code>w_canvas_Select</code>）</li>
+    </ul>
+
+    <h4>扩展功能</h4>
+    <div class="grid-2">
+        <div class="grid-item">
+            <h4>&#x1F4E5; 分包下载检测</h4>
+            <ul>
+                <li>分包未下载 + 动画类物品（<code>itemTypeSort == 0</code>）→ 显示预览拦截按钮</li>
+                <li>点击 <code>w_btn_ShowTips</code> 时弹出下载提示</li>
+            </ul>
+        </div>
+        <div class="grid-item">
+            <h4>&#x1F441; 预览模式</h4>
+            <ul>
+                <li><code>isHideBtn</code> 控制 <code>w_overlay_Btn</code> 可见性</li>
+                <li>预览模式下隐藏操作按钮</li>
+            </ul>
+        </div>
+    </div>
+</div>
+<hr>
+
+<!-- ═══════ 四、关键技术点 ═══════ -->
+<h2 id="s4">&#x1F527; 四、关键技术点</h2>
+
+<div class="grid-2">
+    <div class="grid-item">
+        <h4>&#x1F3D7;&#xFE0F; 1. MVC 架构模式</h4>
+        <ul>
+            <li><strong>Model层：</strong><code>PreparationsModel</code> 管理活动数据（信息、状态、奖励等）</li>
+            <li><strong>View层：</strong><code>UI_</code> 文件继承 <code>BaseViewClass</code>，负责界面渲染和交互</li>
+            <li><strong>通信方式：</strong><code>AddEventListener</code> / <code>DispatchEvent</code> / <code>RemoveEventListener</code></li>
+            <li>实现了 Model 与 View 的完全解耦</li>
+        </ul>
+    </div>
+    <div class="grid-item">
+        <h4>&#x1F3AE; 2. UE4 + UnLua 技术栈</h4>
+        <ul>
+            <li>基于 Unreal Engine 4 的 UMG（Unreal Motion Graphics）UI 框架</li>
+            <li>通过 UnLua 插件实现 Lua 与 UE4 Widget 的绑定</li>
+            <li>LuaDoc 注解声明蓝图绑定：<code>---@field bp XXX_BP</code></li>
+            <li>自动生成区域（Auto Generate Begin/End）维护 Widget 引用和事件绑定</li>
+        </ul>
+    </div>
+    <div class="grid-item">
+        <h4>&#x1F504; 3. 类继承与生命周期</h4>
+        <ul>
+            <li><code>_MOE.class</code> 实现 Lua 面向对象的类创建和继承</li>
+            <li>统一生命周期：<br><code>OnOpen → InitData → InitEvent → InitUI → OnUpdate → PreClose → OnClose</code></li>
+            <li>PickItem 继承 <code>UI_Bag_GiftPackPickItem</code> 基类复用通用选择交互逻辑</li>
+            <li>所有事件在 <code>InitEvent</code> 注册、<code>OnClose</code> 移除，防止内存泄漏</li>
+            <li>数据引用在 <code>OnClose</code> 置 <code>nil</code>，辅助 GC 回收</li>
+        </ul>
+    </div>
+    <div class="grid-item">
+        <h4>&#x1F3A8; 4. UI 组件技术</h4>
+        <ul>
+            <li><strong>WidgetSwitcher：</strong>同一位置切换多种状态显示（按钮的启用/禁用态切换）</li>
+            <li><strong>UListView：</strong>数据驱动的高性能列表渲染，通过 <code>ListSetDatas</code> 绑定数据</li>
+            <li><strong>UMG 动画系统：</strong><code>AnimationPlayForward</code> / <code>Reverse</code> 控制正播/倒播
+                <ul>
+                    <li><code>UMG_OK</code>（已领取勾选）</li>
+                    <li><code>UMG_small</code>（缩小飞行前置）</li>
+                    <li>按钮按下/释放动画通过 <code>OnPressed</code> / <code>OnReleased</code> 委托实现</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="grid-item">
+        <h4>&#x1F3AF; 5. 贝塞尔曲线飞行动画</h4>
+        <ul>
+            <li><strong>类型：</strong>二次贝塞尔曲线</li>
+            <li><strong>公式：</strong><code>B(t) = (1-t)²·P0 + 2t(1-t)·P1 + t²·P2</code></li>
+            <li>P0 = 起始点（弹窗图标位置）</li>
+            <li>P1 = 控制点（起始和目标中点偏上方，形成弧线）</li>
+            <li>P2 = 目标点（活动入口按钮位置）</li>
+            <li>在 <code>OnUpdate</code> 中逐帧插值更新位置，<code>LerpDuration</code> 控制飞行时长</li>
+            <li><code>ComputeRelativeLocalPos</code> 实现跨界面坐标空间统一转换</li>
+        </ul>
+    </div>
+    <div class="grid-item">
+        <h4>&#x1F4D6; 6. 配置表驱动</h4>
+        <ul>
+            <li><code>WolfKillComeBackTable</code> —— 回归活动配置（各档奖励物品ID、过期天数等）</li>
+            <li><code>NR3E3VocationTable</code> —— 职业配置（身份物品与阵营的映射关系）</li>
+            <li><code>NR3ETextTable</code> / <code>TextLuaTable</code> —— 多语言文本配置（<code>LocalKey</code> 国际化）</li>
+        </ul>
+    </div>
+    <div class="grid-item">
+        <h4>&#x1F534; 7. 红点系统集成</h4>
+        <ul>
+            <li>领取奖励时调用 <code>RedDotModel:UpdateRedDotByType(E_RDT_TYPE.PlayerReturn)</code></li>
+            <li>确保玩家领取后红点自动消除，完成引导行为闭环</li>
+        </ul>
+    </div>
+    <div class="grid-item">
+        <h4>&#x1F4E6; 8. 分包下载检测</h4>
+        <ul>
+            <li>接口：<code>NR3E3PreparationsModel:IsDownLoadPakFinish()</code></li>
+            <li>在 MainView 领取操作和 PickItem 动画预览中均有拦截逻辑</li>
+            <li>参数 <code>true</code> = 弹出下载提示 &nbsp;|&nbsp; <code>false</code> = 静默检查</li>
+        </ul>
+    </div>
+</div>
+<hr>
+
+<!-- ═══════ 五、数据埋点一览 ═══════ -->
+<h2 id="s5">&#x1F4CA; 五、数据埋点一览</h2>
+<table>
+    <tr><th>埋点ID</th><th>触发位置</th><th>触发动作</th><th>附加参数</th></tr>
+    <tr><td><code>231020</code></td><td>PopupView</td><td>点击 "前往领取"</td><td>无</td></tr>
+    <tr><td><code>231021</code></td><td>PopupView</td><td>点击 "查看公告"</td><td>无</td></tr>
+    <tr><td><code>231022</code></td><td>MainView</td><td>点击奖励项</td><td><code>index</code></td></tr>
+    <tr><td><code>231023</code></td><td>RewardView / IndetityView</td><td>打开奖励预览</td><td><code>index</code>，物品ID列表</td></tr>
+</table>
+<div class="info-box">
+    <strong>上报接口：</strong><code>MSDKTDMUtil.ReportClick</code><br>
+    <strong>窗口标识：</strong><code>UI_Preparations_View</code>
+</div>
+<hr>
+
+<!-- ═══════ 六、界面交互流程图 ═══════ -->
+<h2 id="s6">&#x1F5FA;&#xFE0F; 六、界面交互流程图</h2>
+
+<h3>完整界面交互流程</h3>
+<div class="mermaid">
+graph TD
+    Login["&#x1F464; 玩家登录&lt;br/&gt;满足回归条件"] -->|自动弹出| Popup
+    Popup["&#x1F389; PopupView 欢迎弹窗&lt;br/&gt;欢迎回归狼人杀！"]
+    Popup -->|"点击【前往领取】"| FlyAnim
+    Popup -->|"点击【查看公告】"| Notice["&#x1F4F0; 狼村公告界面"]
+    FlyAnim["&#x2728; 贝塞尔曲线飞行动画&lt;br/&gt;图标飞向活动入口"] --> MainView
+
+    MainView["&#x1F3E0; MainView 活动主界面&lt;br/&gt;活动时间 open_ts ~ end_ts"]
+    MainView --> R1["&#x1F3AC; 奖励1 限时报告动画"]
+    MainView --> R2["&#x2694;&#xFE0F; 奖励2 限时攻击动画"]
+    MainView --> R3["&#x1F43A; 奖励3 永久狼人身份"]
+
+    R1 -->|"state=1 可领取"| RewardView
+    R2 -->|"state=1 可领取"| RewardView
+    R3 -->|"state=-1/0 预览"| IdentityView
+
+    RewardView["&#x1F381; RewardView&lt;br/&gt;奖励预览/领取界面&lt;br/&gt;PickItem 选择列表"]
+    IdentityView["&#x1F451; IndetityRewardView&lt;br/&gt;身份奖励预览界面&lt;br/&gt;IdentityItem 列表"]
+
+    RewardView -->|"选择物品 → 确认领取"| Backend
+    Backend["&#x1F4E1; PreparationsModel 发送请求"]
+    Backend --> RedDot["&#x1F534; 更新红点状态"]
+    RedDot --> Refresh["&#x1F504; 刷新 MainView 奖励状态"]
+    Refresh --> Close["&#x274C; 关闭 RewardView"]
+
+    style Popup fill:#ffeaa7,stroke:#fdcb6e,color:#2d3436
+    style MainView fill:#fab1a0,stroke:#e17055,color:#2d3436
+    style RewardView fill:#a29bfe,stroke:#6c5ce7,color:#fff
+    style IdentityView fill:#74b9ff,stroke:#0984e3,color:#fff
+    style FlyAnim fill:#55efc4,stroke:#00b894,color:#2d3436
+    style Backend fill:#dfe6e9,stroke:#b2bec3,color:#2d3436
+</div>
+
+<h3>奖励状态转换流程</h3>
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> 未解锁: 玩家进入活动
+    未解锁 --> 已解锁: 完成第N局对局
+    已解锁 --> 可领取: 满足领取条件
+    可领取 --> 已领取: 选择奖励并确认
+    已领取 --> [*]: 播放UMG_OK动画
+
+    note right of 未解锁: state = -1\n显示"待领取"
+    note right of 已解锁: state = 0\n显示进度提示
+    note right of 可领取: state = 1\n显示"领取"按钮
+    note right of 已领取: state = 2\n播放勾选动画
+</div>
+
+<h3>领取流程时序图</h3>
+<div class="mermaid">
+sequenceDiagram
+    participant P as 玩家
+    participant MV as MainView
+    participant RV as RewardView
+    participant Model as PreparationsModel
+    participant Server as 服务端
+    participant RD as RedDotModel
+
+    P->>MV: 点击可领取态奖励(state=1)
+    MV->>MV: 校验分包下载状态
+    alt 分包未下载
+        MV->>P: 弹出下载提示
+    else 分包已下载
+        MV->>RV: 打开RewardView(领取模式)
+        RV->>RV: 解析select_list物品数据
+        RV->>RV: 排序并渲染PickItem列表
+        P->>RV: 选择奖励物品(MaxPickNum=1)
+        RV->>RV: 选满显示确认按钮
+        P->>RV: 点击确认
+        RV->>RD: UpdateRedDotByType(PlayerReturn)
+        RV->>Model: GetReturnActivityReward
+        Model->>Server: 发送领取请求
+        Server-->>Model: 返回领取结果
+        Model->>MV: 刷新奖励状态(state=2)
+        MV->>MV: 播放UMG_OK勾选动画
+        RV->>RV: 关闭界面
+    end
+</div>
+<hr>
+
+<p style="text-align:center; color:#b2bec3; font-size:0.85em; margin-top:30px;">&#x1F4C5; 文档生成日期：2026-03-12 &nbsp;|&nbsp; 版本：v1.0 &nbsp;|&nbsp; 技术栈：UE4 + UnLua + Lua MVC 架构</p>
+
+</div>
+<script>
+    mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose', flowchart: { useMaxWidth: true, htmlLabels: true }, sequence: { useMaxWidth: true, showSequenceNumbers: false } });
+</script>
+</body>
+</html>
