@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>狼人珍宝系统 — 系统说明文档</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.8; color: #2c3e50; background: #f5f7fa; padding: 20px;
+        }
+        .container {
+            max-width: 1200px; margin: 0 auto; background: #fff;
+            border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 50px 60px;
+        }
+        h1 { font-size: 2em; color: #1a1a2e; border-bottom: 3px solid #e17055; padding-bottom: 15px; margin-bottom: 30px; }
+        h2 { font-size: 1.5em; color: #2d3436; margin-top: 40px; margin-bottom: 20px; padding-left: 12px; border-left: 4px solid #e17055; }
+        h3 { font-size: 1.2em; color: #636e72; margin-top: 25px; margin-bottom: 12px; }
+        h4 { font-size: 1.05em; color: #2d3436; margin-top: 20px; margin-bottom: 10px; }
+        p { margin-bottom: 12px; }
+        hr { border: none; border-top: 1px solid #dfe6e9; margin: 30px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.95em; }
+        th { background: #e17055; color: white; padding: 10px 14px; text-align: left; font-weight: 600; }
+        td { padding: 9px 14px; border-bottom: 1px solid #ecf0f1; }
+        tr:nth-child(even) { background: #f8f9fa; }
+        tr:hover { background: #fff3ef; }
+        code {
+            background: #f1f2f6; color: #d63031; padding: 2px 6px; border-radius: 4px;
+            font-family: "Fira Code", "Consolas", "Courier New", monospace; font-size: 0.9em;
+        }
+        pre {
+            background: #2d3436; color: #dfe6e9; padding: 18px 22px; border-radius: 8px;
+            overflow-x: auto; margin: 15px 0; font-size: 0.9em; line-height: 1.6;
+        }
+        pre code { background: none; color: #dfe6e9; padding: 0; }
+        .mermaid {
+            background: #fafbfc; border: 1px solid #e1e4e8; border-radius: 8px;
+            padding: 20px; margin: 20px 0; text-align: center;
+        }
+        strong { color: #2d3436; }
+        ul, ol { margin: 10px 0 10px 24px; }
+        li { margin-bottom: 6px; }
+        .highlight-box {
+            background: linear-gradient(135deg, #fff5f3 0%, #ffe8e2 100%);
+            border-left: 4px solid #e17055; padding: 16px 20px;
+            border-radius: 0 8px 8px 0; margin: 15px 0;
+        }
+        .tip-box {
+            background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 18px;
+            border-radius: 0 8px 8px 0; margin: 15px 0;
+        }
+        .info-box {
+            background: #e8f4fd; border-left: 4px solid #0984e3; padding: 12px 18px;
+            border-radius: 0 8px 8px 0; margin: 15px 0;
+        }
+        .toc {
+            background: #fef9f7; border: 1px solid #e1e4e8; border-radius: 8px;
+            padding: 20px 24px; margin: 20px 0 30px 0;
+        }
+        .toc h3 { margin-top: 0; color: #e17055; }
+        .toc ul { list-style: none; margin-left: 0; }
+        .toc li { margin-bottom: 4px; }
+        .toc a { color: #e17055; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .toc ul ul { margin-left: 20px; }
+        .badge {
+            display: inline-block; background: #e17055; color: white;
+            padding: 2px 10px; border-radius: 12px; font-size: 0.8em; margin-right: 6px;
+        }
+        .badge-blue { background: #0984e3; }
+        .badge-green { background: #00b894; }
+        .badge-purple { background: #6c5ce7; }
+        .data-struct {
+            background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;
+            padding: 16px 20px; margin: 10px 0; font-family: "Fira Code", monospace; font-size: 0.9em;
+        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 15px 0; }
+        .grid-item {
+            background: #fafbfc; border: 1px solid #e1e4e8; border-radius: 8px; padding: 16px;
+        }
+        .grid-item h4 { margin-top: 0; color: #e17055; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<h1>💎 狼人珍宝系统 — 系统说明文档</h1>
+
+<!-- 目录导航 -->
+<div class="toc">
+    <h3>📑 目录</h3>
+    <ul>
+        <li><a href="#s1">一、系统概述</a></li>
+        <li><a href="#s2">二、文件结构与职责</a></li>
+        <li><a href="#s3">三、功能点梳理</a>
+            <ul>
+                <li><a href="#s3-1">3.1 珍宝等级与经验系统</a></li>
+                <li><a href="#s3-2">3.2 珍宝道具列表</a></li>
+                <li><a href="#s3-3">3.3 珍宝值进度条动画</a></li>
+                <li><a href="#s3-4">3.4 珍宝解锁弹窗</a></li>
+                <li><a href="#s3-5">3.5 珍宝详情与操作</a></li>
+                <li><a href="#s3-6">3.6 珍宝预览系统</a></li>
+                <li><a href="#s3-7">3.7 珍宝值兑换</a></li>
+                <li><a href="#s3-8">3.8 珍宝共享系统</a></li>
+                <li><a href="#s3-9">3.9 共享红点与缓存机制</a></li>
+                <li><a href="#s3-10">3.10 红点系统</a></li>
+                <li><a href="#s3-11">3.11 数据埋点</a></li>
+            </ul>
+        </li>
+        <li><a href="#s4">四、应用技术点</a></li>
+        <li><a href="#s5">五、关键数据结构</a></li>
+        <li><a href="#s6">六、系统交互流程</a></li>
+    </ul>
+</div>
+
+<!-- 一、系统概述 -->
+<h2 id="s1">📋 一、系统概述</h2>
+<p>狼人珍宝系统（NR3E3 Treasure System）是"谁是狼人"（NR3E3）玩法中的一套<strong>装饰/成长系统</strong>。玩家通过积累"珍宝值"来提升珍宝等级，每个等级解锁不同的珍宝道具。珍宝道具具有<strong>预览、领取奖励、使用/取消使用、共享给好友、分享截图</strong>等功能。</p>
+
+<div class="highlight-box">
+    <strong>系统整体采用 MVC 架构：</strong><br>
+    • <span class="badge">Model</span> <code>NR3E3TreasureSystemModel</code> — 数据模型<br>
+    • <span class="badge badge-blue">View</span> <code>TreasureSystem</code> 目录下的 <code>UI_Preparations_TreasureSystem_*.lua</code> 文件<br>
+    • <span class="badge badge-purple">辅助</span> <code>NR3E3TreasureSystemPreviewScenes</code>（预览场景管理）/ <code>NR3E3TreasureSystemPreviewUtils</code>（预览工具类）
+</div>
+
+<h3>MVC 架构总览</h3>
+<div class="mermaid">
+graph TB
+    subgraph "Model 层"
+        Model["NR3E3TreasureSystemModel.lua&lt;br/&gt;数据模型"]
+        PreviewScenes["NR3E3TreasureSystemPreviewScenes.lua&lt;br/&gt;预览场景工厂"]
+        PreviewUtils["NR3E3TreasureSystemPreviewUtils.lua&lt;br/&gt;预览工具类"]
+    end
+
+    subgraph "View 层 (TreasureSystem/)"
+        MainView["MainView&lt;br/&gt;珍宝主界面"]
+        Item["Item&lt;br/&gt;珍宝列表单项"]
+        InfoView["TreasureInfoView&lt;br/&gt;珍宝详情弹窗"]
+        Exchange["Exchange&lt;br/&gt;珍宝值兑换"]
+        UnlockView["UnlockTreasureView&lt;br/&gt;解锁动画弹窗"]
+        ShareMain["ShareMainView&lt;br/&gt;共享主界面"]
+        ShareItem["ShareItem&lt;br/&gt;共享槽位"]
+        ShareFriend["ShareFriendList&lt;br/&gt;好友选择"]
+        ShareReceive["ShareReceive&lt;br/&gt;收到共享通知"]
+    end
+
+    subgraph "通信层"
+        EventMgr["EventManager&lt;br/&gt;事件系统"]
+        Protocol["网络协议&lt;br/&gt;C2S / S2C"]
+    end
+
+    Model -->|数据通知| EventMgr
+    EventMgr -->|事件监听| MainView
+    EventMgr -->|事件监听| InfoView
+    EventMgr -->|事件监听| ShareMain
+    Protocol -->|数据回调| Model
+    MainView --> Item
+    MainView --> Exchange
+    InfoView --> UnlockView
+    InfoView --> ShareMain
+    ShareMain --> ShareItem
+    ShareMain --> ShareFriend
+    Model --> PreviewScenes
+    PreviewScenes --> PreviewUtils
+</div>
+
+<hr>
+
+<!-- 二、文件结构与职责 -->
+<h2 id="s2">📁 二、文件结构与职责</h2>
+
+<h3>Model 层</h3>
+<table>
+    <tr><th>文件</th><th>职责</th></tr>
+    <tr><td><code>NR3E3TreasureSystemModel.lua</code></td><td>主数据模型，管理珍宝等级/经验/装备状态/共享数据</td></tr>
+    <tr><td><code>NR3E3TreasureSystemPreviewScenes.lua</code></td><td>各珍宝的预览场景工厂，创建不同珍宝的预览逻辑</td></tr>
+    <tr><td><code>NR3E3TreasureSystemPreviewUtils.lua</code></td><td>预览场景公用工具类，管理预览角色/Widget/背景</td></tr>
+</table>
+
+<h3>View 层 (System/Preparations/TreasureSystem/)</h3>
+<table>
+    <tr><th>文件</th><th>职责</th></tr>
+    <tr><td><code>UI_Preparations_TreasureSystem_MainView.lua</code></td><td>珍宝主界面</td></tr>
+    <tr><td><code>UI_Preparations_TreasureSystem_Item.lua</code></td><td>珍宝列表单项</td></tr>
+    <tr><td><code>UI_Preparations_TreasureSystem_TreasureInfoView.lua</code></td><td>珍宝详情弹窗</td></tr>
+    <tr><td><code>UI_Preparations_TreasureSystem_Exchange.lua</code></td><td>珍宝值兑换界面</td></tr>
+    <tr><td><code>UI_Preparations_TreasureSystem_UnlockTreasureView.lua</code></td><td>珍宝解锁动画弹窗</td></tr>
+    <tr><td><code>UI_Preparations_TreasureSystem_ShareMainView.lua</code></td><td>共享主界面</td></tr>
+    <tr><td><code>UI_Preparations_TreasureSystem_ShareItem.lua</code></td><td>共享槽位单项</td></tr>
+    <tr><td><code>UI_Preparations_TreasureSystem_ShareFriendList.lua</code></td><td>共享好友选择列表</td></tr>
+    <tr><td><code>UI_Preparations_TreasureSystem_ShareFriendItem.lua</code></td><td>共享好友列表单项</td></tr>
+    <tr><td><code>UI_Preparations_TreasureSystem_ShareReceive.lua</code></td><td>收到共享通知界面</td></tr>
+    <tr><td><code>UI_Preparations_TreasureSystem_ShareBox.lua</code></td><td>共享成功消息弹窗</td></tr>
+</table>
+
+<hr>
+
+<!-- 三、功能点梳理 -->
+<h2 id="s3">⚙️ 三、功能点梳理</h2>
+
+<h3 id="s3-1">3.1 珍宝等级与经验系统</h3>
+<ul>
+    <li>珍宝等级由服务器下发的 <code>wolfKillInfo</code> 中的 <code>lv</code> 字段决定</li>
+    <li>珍宝值（经验）由 <code>treasureNum</code> 字段决定</li>
+    <li>每个等级有对应的升级所需经验（<code>upgradeNum</code>），配置在 <code>NR3E3TreasureTable</code></li>
+    <li>支持记录"上次打开界面时的等级/经验"（<code>lvLast</code> / <code>treasureNumLast</code>），用于计算新增经验</li>
+    <li>新增经验 <code>treasureNumAdd</code> 用于驱动进度条增长动画</li>
+    <li>最高等级（<code>HighestLevel</code>）通过遍历配置表动态计算</li>
+</ul>
+
+<h3 id="s3-2">3.2 珍宝道具列表</h3>
+<table>
+    <tr><th>珍宝名称</th><th>道具ID</th><th>说明</th></tr>
+    <tr><td>💰 金钱罐</td><td><code>240901</code></td><td>可领取每日/每周奖励</td></tr>
+    <tr><td>🏷️ 炫彩号牌</td><td><code>240902</code></td><td>会议号牌装饰，支持预览</td></tr>
+    <tr><td>🔨 胖胖锤</td><td><code>240903</code></td><td>互动动画道具，支持预览</td></tr>
+    <tr><td>🌹 浪漫花语</td><td><code>240904</code></td><td>支持预览</td></tr>
+    <tr><td>🎲 幸运骰子</td><td><code>240905</code></td><td>装饰道具</td></tr>
+    <tr><td>🎵 灵笛</td><td><code>240906</code></td><td>支持预览</td></tr>
+    <tr><td>💫 全息手环</td><td><code>240907</code></td><td>会议炫彩人物背景，支持预览</td></tr>
+    <tr><td>🐴 天马缰绳</td><td><code>240908</code></td><td>会议淘汰动画，支持预览</td></tr>
+    <tr><td>🎨 神奇画布</td><td><code>240909</code></td><td>装饰道具</td></tr>
+    <tr><td>📦 百宝箱</td><td><code>240910</code></td><td>互动道具(锤你/拥抱)，支持预览</td></tr>
+    <tr><td>🎖️ 百变徽章</td><td><code>240911</code></td><td>可共享给好友的身份道具</td></tr>
+    <tr><td>👑 共享权杖</td><td><code>240912</code></td><td>可共享给好友的动画道具</td></tr>
+</table>
+
+<h3 id="s3-3">3.3 珍宝值进度条动画</h3>
+<ul>
+    <li>打开珍宝主界面时，若存在新增经验(<code>newExp &gt; 0</code>)，播放进度条增长动画</li>
+    <li>动画支持<strong>跨等级</strong>（StartLevel → FinalLevel），每次进度条满后触发升级特效</li>
+    <li>升级特效包含粒子动画(<code>UMG_Fx_LeverUp_01</code>)和音效(<code>52182</code>)</li>
+    <li>进度条增长期间播放持续音效(<code>52181</code>)</li>
+    <li>动画通过 <code>OnUpdate(deltaTime)</code> 逐帧驱动，支持不同阶段不同速度</li>
+    <li>动画结束后调用 <code>OnFinishAddExpAnim</code> 更新数据并弹出解锁弹窗</li>
+</ul>
+
+<div class="mermaid">
+sequenceDiagram
+    participant Server as 服务器
+    participant Model as TreasureSystemModel
+    participant Main as MainView
+    participant Anim as 进度条动画
+    participant Unlock as UnlockTreasureView
+
+    Server->>Model: 数据更新(lv/treasureNum)
+    Model->>Model: FlushTreasureParameters()
+    Model->>Main: RefreshUI()
+    Main->>Main: 检测 newExp > 0
+    Main->>Anim: PlayAddExpAnim()
+    loop 逐帧驱动
+        Anim->>Anim: OnUpdate(deltaTime)
+        Anim->>Main: 更新进度条百分比
+        alt 进度满 需跨级
+            Anim->>Main: 重置进度 + 等级+1
+            Anim->>Main: 播放升级粒子+音效
+        end
+    end
+    Anim->>Main: OnFinishAddExpAnim()
+    Main->>Server: UpdateLastTreasureExp()
+    Main->>Unlock: 弹出解锁弹窗
+</div>
+
+<h3 id="s3-4">3.4 珍宝解锁弹窗</h3>
+<ul>
+    <li>当等级提升解锁新珍宝时，弹出 <code>UnlockTreasureView</code></li>
+    <li>支持<strong>连续多个珍宝解锁</strong>展示（同一等级可解锁多个珍宝、跨等级逐个展示）</li>
+    <li>展示内容包含：<strong>Spine动画、粒子特效、珍宝名称、描述</strong></li>
+    <li>播放解锁音效(<code>52183</code>)</li>
+    <li>支持<strong>截图分享</strong>功能（通过 ScreenShotManager 截图 + ShareModel 分享）</li>
+</ul>
+
+<h3 id="s3-5">3.5 珍宝详情与操作</h3>
+<p>点击珍宝列表项打开 <code>TreasureInfoView</code> 详情弹窗，操作按钮根据状态切换（通过 <code>WidgetSwitcher</code> 切换7种状态）：</p>
+<table>
+    <tr><th>状态编号</th><th>状态名称</th><th>说明</th></tr>
+    <tr><td>0</td><td>领取奖励</td><td>珍宝已解锁但奖励未领取</td></tr>
+    <tr><td>1</td><td>已领取</td><td>今日/本周已领取</td></tr>
+    <tr><td>2</td><td>使用</td><td>可使用珍宝</td></tr>
+    <tr><td>3</td><td>取消使用</td><td>已在使用中，可取消</td></tr>
+    <tr><td>4</td><td>待解锁</td><td>显示所需解锁等级</td></tr>
+    <tr><td>5</td><td>不可使用</td><td>已自动使用中</td></tr>
+    <tr><td>6</td><td>共享按钮</td><td>百变徽章/共享权杖专用</td></tr>
+</table>
+
+<h3 id="s3-6">3.6 珍宝预览系统</h3>
+<p>基于 <code>PreviewScene</code> 模式，每种珍宝有独立的预览场景类：</p>
+
+<div class="highlight-box">
+    <strong>预览场景基类 <code>BaseTreasureSystemPreviewScene</code> 提供：</strong><br>
+    • <code>OnOpen</code>: 初始化预览工具、显示主Widget和背景、关闭粒子优化<br>
+    • <code>OnExit</code>: 清理子Widget、预览角色、计时器、事件
+</div>
+
+<table>
+    <tr><th>预览场景</th><th>对应珍宝</th><th>实现方式</th></tr>
+    <tr><td>CoolBrand</td><td>炫彩号牌</td><td>创建预览Avatar + BillBoard Widget + 号牌选择子界面</td></tr>
+    <tr><td>FatHammer</td><td>胖胖锤</td><td>请求预览互动动画</td></tr>
+    <tr><td>SpiritFlute</td><td>灵笛</td><td>创建预览Avatar + BillBoard Widget</td></tr>
+    <tr><td>RomanticFlower</td><td>浪漫花语</td><td>打开浪漫花语子界面</td></tr>
+    <tr><td>Reins</td><td>天马缰绳</td><td>请求会议淘汰动画预览</td></tr>
+    <tr><td>Bracelet</td><td>全息手环</td><td>打开人物背景准备界面</td></tr>
+    <tr><td>GoodChest</td><td>百宝箱</td><td>打开互动道具准备界面</td></tr>
+    <tr><td>CommercializeIndex</td><td>通用商业化</td><td>编号道具点击预览</td></tr>
+    <tr><td>MeetingBackGround</td><td>会议背景</td><td>会议背景预览</td></tr>
+</table>
+
+<div class="mermaid">
+graph LR
+    A["OpenTreasurePreviewScene(TreasureIndex)"] --> B{"根据ID映射"}
+    B --> C1["CoolBrand"]
+    B --> C2["FatHammer"]
+    B --> C3["SpiritFlute"]
+    B --> C4["RomanticFlower"]
+    B --> C5["Reins"]
+    B --> C6["Bracelet"]
+    B --> C7["GoodChest"]
+    B --> C8["CommercializeIndex"]
+    B --> C9["MeetingBackGround"]
+
+    C1 --> D["BaseTreasureSystemPreviewScene&lt;br/&gt;(OnOpen / OnExit)"]
+    C2 --> D
+    C3 --> D
+    C4 --> D
+    C5 --> D
+    C6 --> D
+    C7 --> D
+    C8 --> D
+    C9 --> D
+</div>
+
+<h3 id="s3-7">3.7 珍宝值兑换</h3>
+<ul>
+    <li><code>Exchange</code> 界面通过商城系统购买珍宝值道具(<code>240999</code>)</li>
+    <li>支持<strong>批量购买</strong>，显示兑换数量选择器（<code>UI_NR3E_BuyItemWithCount</code>）</li>
+    <li>购买限制类型：日限/周限/月限/年限/赛季限/终身限</li>
+    <li>购买前弹出<strong>二次确认弹窗</strong></li>
+    <li>购买成功后触发 <code>ON_NR3E3_TREASURE_SYSTEM_EXCHANGE_BUY_SUCCESSED</code> 事件</li>
+    <li>计算升到下一级和满级所需经验，展示给玩家参考</li>
+</ul>
+
+<h3 id="s3-8">3.8 珍宝共享系统</h3>
+<p>百变徽章(<code>240911</code>)可共享身份，共享权杖(<code>240912</code>)可共享动画。</p>
+
+<div class="mermaid">
+sequenceDiagram
+    participant Player as 玩家
+    participant Info as TreasureInfoView
+    participant ShareMain as ShareMainView
+    participant FriendList as ShareFriendList
+    participant FriendItem as ShareFriendItem
+    participant Server as 服务器
+
+    Player->>Info: 点击共享按钮
+    Info->>ShareMain: 打开共享主界面(展示槽位)
+    Player->>ShareMain: 点击空槽位
+    ShareMain->>FriendList: 打开好友选择列表
+    Player->>FriendItem: 选择好友,点击"分享"
+    FriendItem->>Server: TryRequestTreasureShare(发协议)
+    Server-->>FriendItem: 共享成功回调
+    FriendItem->>FriendItem: 刷新按钮 + 弹出成功提示
+    FriendItem->>Player: 可选:发送感谢消息 + 跳转聊天
+</div>
+
+<p><strong>共享子模块说明：</strong></p>
+<ul>
+    <li><strong>ShareMainView</strong>：根据珍宝配置的 <code>shareNum</code> 决定槽位数量</li>
+    <li><strong>ShareItem</strong>：已共享状态显示好友头像/昵称/剩余时间；未共享显示添加按钮；到期自动刷新(1秒轮询)</li>
+    <li><strong>ShareFriendList</strong>：从 FriendModel 获取好友数据，支持按昵称/UID/备注名搜索；已共享好友排在末尾</li>
+    <li><strong>ShareFriendItem</strong>：展示头像/昵称/段位/亲密度/在线状态</li>
+    <li><strong>ShareReceive</strong>：收到共享通知，展示谁给你共享了什么、剩余时间；支持"道谢"和"收下"</li>
+</ul>
+
+<h3 id="s3-9">3.9 共享红点与缓存机制</h3>
+<div class="info-box">
+    <strong>缓存格式：</strong> <code>"headFlag#month#uid1:flag1:endTime1&amp;uid2:flag2:endTime2"</code><br>
+    • <code>flag=0</code> 表示需要弹窗，<code>flag=1</code> 表示已处理<br>
+    • 跨月自动清理旧缓存数据<br>
+    • <code>HasNewShareAni</code> / <code>HasNewShareVocation</code> 用于驱动红点显示
+</div>
+
+<h3 id="s3-10">3.10 红点系统</h3>
+<ul>
+    <li>珍宝列表项通过 <code>UI_CommonComp_RedDot</code> 组件显示红点</li>
+    <li>红点条件：珍宝已解锁且可使用(<code>CanUse</code>)但未领取奖励(<code>IsRewarded</code>)</li>
+    <li>"新"标记(New Tag)：新解锁的珍宝标记为"新"，查看后通过协议消除</li>
+    <li>装饰入口红点由 <code>ON_NR3E3_TREASURE_SYSTEM_DECORATETIP_CHANGED</code> 事件控制</li>
+</ul>
+
+<h3 id="s3-11">3.11 数据埋点</h3>
+<table>
+    <tr><th>埋点ID</th><th>触发节点</th></tr>
+    <tr><td><code>278001</code></td><td>点击加经验按钮</td></tr>
+    <tr><td><code>278002</code></td><td>点击珍宝列表项</td></tr>
+    <tr><td><code>278003</code></td><td>领取珍宝奖励</td></tr>
+    <tr><td><code>278004</code></td><td>使用/取消使用珍宝</td></tr>
+    <tr><td><code>278005</code></td><td>预览珍宝</td></tr>
+    <tr><td><code>278006</code></td><td>分享珍宝解锁截图</td></tr>
+</table>
+
+<hr>
+
+<!-- ==================== 四、应用技术点 ==================== -->
+<h2 id="s4">��� 四、应用技术点</h2>
+
+<h3>4.1 MVC 架构</h3>
+<ul>
+    <li><strong>Model</strong>: <code>NR3E3TreasureSystemModel</code> 统一管理数据状态，View 层通过 Model 获取数据</li>
+    <li><strong>View</strong>: 各 UI 文件继承 <code>BaseViewClass</code>，遵循 <code>OnOpen/InitData/InitEvent/InitUI/OnClose</code> 生命周期</li>
+    <li><strong>通信</strong>: 使用事件系统（EventManager）进行 Model → View 的数据通知</li>
+</ul>
+
+<h3>4.2 工厂模式 + 策略模式（预览场景）</h3>
+<ul>
+    <li><code>NR3E3TreasureSystemPreviewScenes</code> 作为预览场景工厂</li>
+    <li>每个珍宝对应一个预览场景类，通过 <code>setmetatable</code> 继承 <code>BaseTreasureSystemPreviewScene</code></li>
+    <li>Model 中通过 <code>TreasureSystemPreviewSceneInfos</code> 表将珍宝ID映射到对应预览场景</li>
+    <li>调用 <code>OpenTreasurePreviewScene(TreasureIndex)</code> 统一入口，内部分派到具体场景</li>
+</ul>
+
+<h3>4.3 事件驱动</h3>
+<div class="highlight-box">
+    <strong>典型事件流：</strong><br>
+    购买珍宝值 → <code>BagModel_NewItemChange</code> → <code>FlushTreasureParameters</code>
+    → <code>ON_NR3E3_TREASURE_SYSTEM_EXCHANGE_BUY_SUCCESSED</code> → MainView 刷新
+</div>
+<p>系统定义了多个事件常量（<code>ON_NR3E3_TREASURE_SYSTEM_*</code> 系列），网络协议回调 → 刷新数据 → 分发事件 → UI 监听并刷新。</p>
+
+<h3>4.4 网络协议</h3>
+<table>
+    <tr><th>协议</th><th>方向</th><th>用途</th></tr>
+    <tr><td><code>WolfKillTreasureUse</code></td><td>C2S / S2C</td><td>使用/取消使用珍宝</td></tr>
+    <tr><td><code>WolfKillTreasureRefreshLevel</code></td><td>C2S / S2C</td><td>刷新珍宝等级上限</td></tr>
+    <tr><td><code>WolfKillTreasureRead</code></td><td>C2S</td><td>更新"上次浏览时的经验值"</td></tr>
+    <tr><td><code>WolfKillTreasureLevelRead</code></td><td>C2S</td><td>消除珍宝"新"标记</td></tr>
+    <tr><td><code>WolfKillTreasureData</code></td><td>C2S / S2C</td><td>获取珍宝配置数据</td></tr>
+    <tr><td><code>WolfKillTreasureShare</code></td><td>C2S</td><td>发起珍宝共享</td></tr>
+</table>
+
+<h3>4.5 定时器机制</h3>
+<table>
+    <tr><th>定时器</th><th>间隔</th><th>用途</th></tr>
+    <tr><td><code>LoopReqServerTimer</code></td><td>300秒 (5分钟)</td><td>轮询服务器获取最新配置</td></tr>
+    <tr><td><code>m_CheckShareTimer</code></td><td>1秒</td><td>更新共享剩余时间和跨月检查</td></tr>
+    <tr><td><code>AddTimer</code></td><td>一次性</td><td>进度条动画结束后延时弹窗</td></tr>
+    <tr><td>解锁延时</td><td>2秒</td><td>解锁动画延时显示关闭按钮</td></tr>
+</table>
+
+<h3>4.6 3D 预览技术</h3>
+<ul>
+    <li>使用 <code>PreviewManager</code> 管理预览背景和灯光</li>
+    <li>通过 <code>BP_AvatarPreviewActor_C</code> 实例化预览角色</li>
+    <li>支持自定义位置(<code>CustomLocation</code>)、缩放(<code>CustomScale</code>)、旋转</li>
+    <li><code>WidgetComponent</code> 用于在3D空间中挂载 UMG 界面（BillBoard 效果）</li>
+    <li><code>PerfAgent</code> 机制：预览时临时关闭粒子优化，保证预览效果完整</li>
+</ul>
+
+<h3>4.7 Spine 动画 + 粒子特效</h3>
+<ul>
+    <li>珍宝图标使用 <code>SpineWidget</code> 播放 Spine 骨骼动画（<code>Ani_loop</code> 循环播放）</li>
+    <li>珍宝特效使用 <code>ParticleSystemWidget</code> 播放粒子系统</li>
+    <li>资源通过 <code>AssetLoadUtils.LoadAssetObject</code> 动态加载</li>
+    <li>资源存在性通过 <code>AssetMgr:IsAssetExistsInAssetNameMap</code> 校验</li>
+</ul>
+
+<h3>4.8 客户端缓存持久化</h3>
+<ul>
+    <li>使用 <code>PlayerModel:SetClientCacheData</code> / <code>GetClientCacheData</code> 进行本地持久化</li>
+    <li>珍宝入口浏览标记：<code>WerewolfPreparationDecorateTreasureTip</code></li>
+    <li>共享弹窗状态缓存：<code>NR3E3TreasureSystemShareAni</code> / <code>NR3E3TreasureSystemShareVocation</code></li>
+    <li>缓存数据格式经过精心设计，支持多好友/多月份/弹窗状态追踪</li>
+</ul>
+
+<h3>4.9 WidgetSwitcher 状态机</h3>
+<table>
+    <tr><th>组件</th><th>所在界面</th><th>状态数</th><th>说明</th></tr>
+    <tr><td><code>w_switcher_Btn</code></td><td>TreasureInfoView</td><td>7种(0-6)</td><td>领取/已领/使用/取消/待解锁/不可用/共享</td></tr>
+    <tr><td><code>w_switcher_NameState</code></td><td>TreasureItem</td><td>2种</td><td>解锁/未解锁显示</td></tr>
+    <tr><td><code>w_switcher_Level</code></td><td>MainView</td><td>2种</td><td>正常/满级显示</td></tr>
+</table>
+
+<h3>4.10 其他技术点</h3>
+<div class="grid-2">
+    <div class="grid-item">
+        <h4>��� 资源挂载保障</h4>
+        <p>打开珍宝界面前通过 <code>MountManager</code> 挂载狼人玩法和E0资源包，避免因资源卸载导致功能异常。</p>
+    </div>
+    <div class="grid-item">
+        <h4>��� 截图分享</h4>
+        <p>通过 <code>ScreenShotManager:StartScreenShot</code> 截图，截图前/后处理 Toast 弹窗可见性，保存后打开分享界面。</p>
+    </div>
+    <div class="grid-item">
+        <h4>��� 配置热更新</h4>
+        <p>珍宝配置支持服务器下发，支持版本号限制(<code>minVersion</code>)和开启时间限制(<code>startTime</code>)，动态过滤可用等级。</p>
+    </div>
+    <div class="grid-item">
+        <h4>��� ListView 列表管理</h4>
+        <p>使用 <code>UListView</code> 实现高效滚动，进入时自动定位到当前等级对应珍宝位置，好友列表支持搜索过滤和分组排序。</p>
+    </div>
+</div>
+
+<hr>
+
+<!-- ==================== 五、关键数据结构 ==================== -->
+<h2 id="s5">��� 五、关键数据结构</h2>
+
+<div class="grid-2">
+    <div class="grid-item">
+        <h4>TreasureEquipmentEntry（珍宝装备条目）</h4>
+        <div class="data-struct">
+{<br>
+&nbsp;&nbsp;TreasureIndex &nbsp;&nbsp;&nbsp;&nbsp;: number &nbsp; -- 珍宝道具ID<br>
+&nbsp;&nbsp;TreasurebUsed &nbsp;&nbsp;&nbsp;&nbsp;: boolean &nbsp;-- 是否正在使用<br>
+&nbsp;&nbsp;TreasurebRewards &nbsp;: boolean &nbsp;-- 奖励是否已领取<br>
+&nbsp;&nbsp;TreasurebNewAdded : boolean &nbsp;-- 是否新解锁<br>
+}
+        </div>
+    </div>
+    <div class="grid-item">
+        <h4>TreasureShareTypeInfo（共享信息）</h4>
+        <div class="data-struct">
+{<br>
+&nbsp;&nbsp;SharePos &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: number &nbsp;-- 共享槽位<br>
+&nbsp;&nbsp;SharePlayerUID : number &nbsp;-- 共享目标玩家UID<br>
+&nbsp;&nbsp;ShareEndTime &nbsp;&nbsp;: number &nbsp;-- 共享结束时间戳<br>
+}
+        </div>
+    </div>
+    <div class="grid-item">
+        <h4>TreasureItemConfigItem（珍宝配置项）</h4>
+        <div class="data-struct">
+{<br>
+&nbsp;&nbsp;TreasureIndex &nbsp;&nbsp;&nbsp;&nbsp;: number -- 珍宝道具ID<br>
+&nbsp;&nbsp;TreasureNum &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: table &nbsp;-- 道具数量列表<br>
+&nbsp;&nbsp;TreasureItems &nbsp;&nbsp;&nbsp;&nbsp;: table &nbsp;-- 关联道具ID列表<br>
+&nbsp;&nbsp;TreasureCanUse &nbsp;&nbsp;&nbsp;: number -- 是否可手动使用<br>
+&nbsp;&nbsp;TreasureCanDayUse : number -- 每日可使用次数<br>
+&nbsp;&nbsp;TreasureCanWeekUse: number -- 每周可使用次数<br>
+&nbsp;&nbsp;TreasureShareFlag : number -- 共享类型(1/2)<br>
+&nbsp;&nbsp;TreasureShareNum &nbsp;: number -- 可共享人数<br>
+&nbsp;&nbsp;TreasureShareDays : number -- 共享天数<br>
+&nbsp;&nbsp;LockLevel &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: number -- 解锁所需等级<br>
+}
+        </div>
+    </div>
+    <div class="grid-item">
+        <h4>NR3E3TreasureShareStruct（共享缓存）</h4>
+        <div class="data-struct">
+{<br>
+&nbsp;&nbsp;uid &nbsp;&nbsp;&nbsp;&nbsp;: number -- 共享来源玩家UID<br>
+&nbsp;&nbsp;flag &nbsp;&nbsp;&nbsp;: number -- 弹窗状态(0需弹/1已处理)<br>
+&nbsp;&nbsp;endTime : number -- 共享结束时间戳<br>
+}
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<!-- ==================== 六、系统交互流程 ==================== -->
+<h2 id="s6">���️ 六、系统交互流程</h2>
+
+<h3>6.1 打开珍宝主界面</h3>
+<div class="mermaid">
+graph TD
+    A["用户操作"] --> B["OpenTreasureSystem()"]
+    B --> C{"IsTreasureSystemEnable()?"}
+    C -->|否| X["返回"]
+    C -->|是| D["RefreshNewTreasureLevel()&lt;br/&gt;(请求服务器)"]
+    D --> E["获取热购Tab索引"]
+    E --> F["打开热购界面(指定Tab)"]
+    F --> G["MainView:OnOpen"]
+    G --> H["InitData / InitEvent / InitUI"]
+    H --> I["RefreshListView&lt;br/&gt;(加载珍宝列表)"]
+    H --> J["RefreshUI&lt;br/&gt;(刷新等级/进度)"]
+    J --> K{"newExp > 0 ?"}
+    K -->|是| L["PlayAddExpAnim()&lt;br/&gt;播放进度条动画"]
+    K -->|否| M["静态显示"]
+</div>
+
+<h3>6.2 珍宝值增长动画流程</h3>
+<pre><code>服务器数据更新 → FlushTreasureParameters()
+→ MainView:RefreshUI → 检测 newExp > 0
+→ UpdateProgressInfo(true, newExp) + PlayAddExpAnim()
+→ OnUpdate逐帧驱动进度条
+→ 跨级: 重置进度 + 等级+1 + 升级特效
+→ 到达目标: OnFinishAddExpAnim()
+→ UpdateLastTreasureExp()（通知服务器已查看）
+→ 弹出 UnlockTreasureView</code></pre>
+
+<h3>6.3 珍宝共享流程</h3>
+<pre><code>用户点击共享 → TreasureInfoView:OnClickedBtnShare
+→ 打开 ShareMainView（展示槽位）
+→ 点击空槽位 → 打开 ShareFriendList
+→ 选择好友 → TryRequestTreasureShare（发协议）
+→ 服务器返回成功 → ON_NR3E3_TREASURE_SYSTEM_SHARE_SUCC
+→ ShareFriendItem:OnShareSucc → 刷新按钮 + 弹出成功提示
+→ 可选：发送感谢消息 + 跳转聊天</code></pre>
+
+</div>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        securityLevel: 'loose',
+        flowchart: { useMaxWidth: true, htmlLabels: true },
+        sequence: { useMaxWidth: true, showSequenceNumbers: false }
+    });
+</script>
+</body>
+</html>
