@@ -1,0 +1,447 @@
+================================================================================
+              寻宝模式（TreasureHunt）新手引导逻辑整理文档
+================================================================================
+
+新手引导配置参考文档：https://iwiki.woa.com/p/4008159712
+狼人新手引导配置表：X_新手引导表_nr3e.xlsx
+
+================================================================================
+一、新手引导系统概述
+================================================================================
+
+寻宝模式的新手引导基于通用的 PlayerGuideModel 实现：
+  - _MOE.Models.PlayerGuideModel:HasFinishGuide(guideID)  -- 判断引导是否已完成
+  - _MOE.Models.PlayerGuideModel:EndCurrentGuide(true)     -- 结束当前引导（标记完成）
+  - _MOE.Models.PlayerGuideModel:GetCurrentGuideID()       -- 获取当前正在进行的引导ID
+
+核心逻辑：
+  1. 通过 HasFinishGuide(guideID) 判断玩家是否已完成某个引导步骤
+  2. 如果未完成，则通过 DispatchEvent 派发引导事件名称
+  3. 事件名称对应新手引导配置表中的 "触发事件"，引导系统监听该事件后展示引导UI
+  4. 引导分为 平民(Prey)/狼人(Hunter) 两个阵营独立配置，同一时机有两套引导ID
+
+PlayerGuideModel 关键方法说明：
+  定义在 LetsGo/Content/LetsGo/Script/Model/Guide/PlayerGuideModel.lua
+  - HasFinishGuide(guideID)：先检查AB测试分组，再检查本地缓存和服务端已完成列表
+  - IsGuideAvailable(guideID)：判断引导是否可用（未完成且满足前置条件）
+  - StartGuide(guideID)：开始某个引导
+  - EndCurrentGuide(withComplete)：结束当前引导，withComplete=true表示标记完成
+  - GetCurrentGuideID()：获取当前正在进行的引导ID
+
+================================================================================
+二、寻宝模式新手引导ID汇总表
+================================================================================
+
+按阵营和平台分类如下：
+
+【平民阵营（Prey）引导ID】
+  503052 - 平民-开局引导（游戏开始界面关闭后触发）
+  503053 - 平民-挖宝引导（移动端，挖宝按钮高亮时触发）
+  503054 - 平民-搬起宝物引导（移动端，搬运按钮高亮时触发）
+  503055 - 平民-查看地图引导（搬运宝物成功后触发）
+  503057 - 平民-交付宝藏引导（宝藏交付成功后触发）
+  503059 - 平民-查看宝物提示引导（购物飞行特效结束后触发）
+  503068 - 平民-打开商店引导（商店面板打开时触发）
+  503070 - 平民-挖宝引导_PC端（PC端挖宝按钮高亮时触发）
+  503071 - 平民-搬起宝物引导_PC端（PC端搬运按钮高亮时触发）
+
+【狼人阵营（Hunter）引导ID】
+  503060 - 狼人-开局引导（游戏开始界面关闭后触发）
+  503061 - 狼人-挖宝引导（移动端，挖宝按钮高亮时触发）
+  503062 - 狼人-搬起宝物引导（移动端，搬运按钮高亮时触发）
+  503063 - 狼人-查看地图引导（搬运宝物成功后触发）
+  503065 - 狼人-交付宝藏引导（宝藏交付成功后触发）
+  503067 - 狼人-查看宝物提示引导（购物飞行特效结束后触发）
+  503069 - 狼人-打开商店引导（商店面板打开时触发）
+  503072 - 狼人-挖宝引导_PC端（PC端挖宝按钮高亮时触发）
+  503073 - 狼人-搬起宝物引导_PC端（PC端搬运按钮高亮时触发）
+
+注：平民和狼人的引导是成对出现的，对应相同的引导流程但不同的引导内容。
+    PC端和移动端的挖宝/搬运引导使用不同的引导ID（PC端通过快捷键操作，移动端通过按钮点击）。
+
+================================================================================
+三、引导触发事件名称汇总
+================================================================================
+
+以下事件名称对应新手引导配置表中的 "触发事件" 列：
+
+【阶段1：游戏开局引导】
+  平民：ON_NR3E3TreasureHuntRule_Prey_StartGameGuide       -> 引导ID 503052
+  狼人：ON_NR3E3TreasureHuntRule_Hunter_StartGameGuide     -> 引导ID 503060
+
+【阶段2：挖宝引导（移动端）】
+  平民：ON_NR3E3TreasureHuntRule_Prey_DiggingTreasureGuide       -> 引导ID 503053
+  狼人：ON_NR3E3TreasureHuntRule_Hunter_DiggingTreasureGuide     -> 引导ID 503061
+
+【阶段2-PC：挖宝引导（PC端）】
+  平民：ON_NR3E3TreasureHuntRule_Prey_DiggingTreasureGuide_PC    -> 引导ID 503070
+  狼人：ON_NR3E3TreasureHuntRule_Hunter_DiggingTreasureGuide_PC  -> 引导ID 503072
+
+【阶段2结束：挖宝引导结束（移动端）】
+  平民：ON_NR3E3TreasureHuntRule_Prey_DiggingTreasureGuideEnd       -> 引导ID 503053
+  狼人：ON_NR3E3TreasureHuntRule_Hunter_DiggingTreasureGuideEnd     -> 引导ID 503061
+
+【阶段2结束-PC：挖宝引导结束（PC端）】
+  平民：ON_NR3E3TreasureHuntRule_Prey_DiggingTreasureGuideEnd_PC    -> 引导ID 503070
+  狼人：ON_NR3E3TreasureHuntRule_Hunter_DiggingTreasureGuideEnd_PC  -> 引导ID 503072
+
+【阶段3：搬起宝物引导（移动端）】
+  平民：ON_NR3E3TreasureHuntRule_Prey_LiftTreasureGuide       -> 引导ID 503054
+  狼人：ON_NR3E3TreasureHuntRule_Hunter_LiftTreasureGuide     -> 引导ID 503062
+
+【阶段3-PC：搬起宝物引导（PC端）】
+  平民：ON_NR3E3TreasureHuntRule_Prey_LiftTreasureGuide_PC    -> 引导ID 503071
+  狼人：ON_NR3E3TreasureHuntRule_Hunter_LiftTreasureGuide_PC  -> 引导ID 503073
+
+【阶段3结束：搬起宝物引导结束（移动端）】
+  平民：ON_NR3E3TreasureHuntRule_Prey_LiftTreasureGuideEnd       -> 引导ID 503054
+  狼人：ON_NR3E3TreasureHuntRule_Hunter_LiftTreasureGuideEnd     -> 引导ID 503062
+
+【阶段3结束-PC：搬起宝物引导结束（PC端）】
+  平民：ON_NR3E3TreasureHuntRule_Prey_LiftTreasureGuideEnd_PC    -> 引导ID 503071
+  狼人：ON_NR3E3TreasureHuntRule_Hunter_LiftTreasureGuideEnd_PC  -> 引导ID 503073
+
+【阶段4：查看地图引导】
+  平民：ON_NR3E3TreasureHuntRule_Prey_CheckMapGuide       -> 引导ID 503055
+  狼人：ON_NR3E3TreasureHuntRule_Hunter_CheckMapGuide     -> 引导ID 503063
+
+【阶段5：交付宝藏引导】
+  平民：ON_NR3E3TreasureHuntRule_Prey_HandInTreasureGuide       -> 引导ID 503057
+  狼人：ON_NR3E3TreasureHuntRule_Hunter_HandInTreasureGuide     -> 引导ID 503065
+
+【阶段6：打开商店引导】
+  平民：ON_NR3E3TreasureHuntRule_Prey_OpenShopGuide       -> 引导ID 503068
+  狼人：ON_NR3E3TreasureHuntRule_Hunter_OpenShopGuide     -> 引导ID 503069
+
+【阶段7：查看宝物提示引导】
+  平民：ON_NR3E3TreasureHuntRule_Prey_CheckTreasureGuide       -> 引导ID 503059
+  狼人：ON_NR3E3TreasureHuntRule_Hunter_CheckTreasureGuide     -> 引导ID 503067
+
+【已注释/废弃的引导事件（TaskItem中）】
+  ON_NR3E3GoodPlayerTaskGuide          -> 任务项引导开始（已注释）
+  ON_NR3E3GoodPlayerTaskGuide_End      -> 任务项引导结束（已注释）
+
+================================================================================
+四、引导触发时机与代码位置详解
+================================================================================
+
+------------------------------------------------------------------------
+【阶段1：游戏开局引导】
+------------------------------------------------------------------------
+触发时机：游戏开始时的"开始界面"（StartView）关闭后
+触发条件：HasFinishGuide(503052/503060) == false
+
+代码位置：
+  UI_InLevel_NR3E3_TreasureHunt_StartView.lua -> OnClose()
+  路径：G:/LetsGoDevelop/LetsGo/Content/Feature/NR3E/Script/System/InLevel/
+        UI_NR3E3/TreasureHunt/UI_InLevel_NR3E3_TreasureHunt_StartView.lua
+
+代码逻辑：
+  function UI_InLevel_NR3E3_TreasureHunt_StartView:OnClose()
+      -- ... 清理定时器 ...
+      if not _MOE.Models.PlayerGuideModel:HasFinishGuide(503052) then
+          _MOE.EventManager:DispatchEvent("ON_NR3E3TreasureHuntRule_Prey_StartGameGuide")
+      end
+      if not _MOE.Models.PlayerGuideModel:HasFinishGuide(503060) then
+          _MOE.EventManager:DispatchEvent("ON_NR3E3TreasureHuntRule_Hunter_StartGameGuide")
+      end
+  end
+
+说明：
+  - StartView 是游戏开局时显示的身份确认界面（显示10秒后自动关闭或玩家手动关闭）
+  - 界面关闭时（OnClose）触发开局引导，引导玩家了解基本操作
+  - 平民阵营和狼人阵营分别触发各自的引导
+
+------------------------------------------------------------------------
+【阶段2：挖宝引导】
+------------------------------------------------------------------------
+触发时机：玩家靠近宝箱，挖宝技能按钮出现在UI上时
+触发条件：HasFinishGuide(503053/503061/503070/503072) == false
+结束时机：挖宝技能按钮从UI上隐藏时，或PC端按下快捷键成功挖宝时
+
+代码位置：
+  VocationAbility_CTH_OpenTreasureBox.lua -> OnVocationDataHighLightOnButton() / OnVocationDataHideOnButton()
+  路径：G:/LetsGoDevelop/LetsGo/Content/Feature/NR3E/Script/System/E3/Vocation/
+        Ability/VocationAbility_CTH_OpenTreasureBox.lua
+
+代码逻辑（触发引导 - 按钮高亮时）：
+  function VocationAbility_CTH_OpenTreasureBox:OnVocationDataHighLightOnButton()
+      if _MOE.GEnv.IsPCStyle then
+          -- PC端引导
+          if not HasFinishGuide(503070) then DispatchEvent("Prey_DiggingTreasureGuide_PC")
+          if not HasFinishGuide(503072) then DispatchEvent("Hunter_DiggingTreasureGuide_PC")
+      else
+          -- 移动端引导
+          if not HasFinishGuide(503053) then DispatchEvent("Prey_DiggingTreasureGuide")
+          if not HasFinishGuide(503061) then DispatchEvent("Hunter_DiggingTreasureGuide")
+      end
+  end
+
+PC端特殊处理（通过快捷键直接完成引导）：
+  -- 在 K2_ActivateAbility 中
+  if _MOE.GEnv.IsPCStyle and not self:K2_IsAuthoirty() then
+      local guideId = _MOE.Models.PlayerGuideModel:GetCurrentGuideID()
+      if guideId == 503070 and not HasFinishGuide(503070) then
+          _MOE.Models.PlayerGuideModel:EndCurrentGuide(true)
+      end
+      if guideId == 503072 and not HasFinishGuide(503072) then
+          _MOE.Models.PlayerGuideModel:EndCurrentGuide(true)
+      end
+  end
+
+------------------------------------------------------------------------
+【阶段3：搬起宝物引导】
+------------------------------------------------------------------------
+触发时机：玩家靠近掉落的宝物，搬运技能按钮出现在UI上时
+触发条件：HasFinishGuide(503054/503062/503071/503073) == false
+结束时机：搬运技能按钮从UI上隐藏时，或PC端按下快捷键成功搬起时
+
+代码位置：
+  NR3E3_VocationAbility_CTH_TreasureCarry.lua -> OnVocationDataHighLightOnButton() / OnVocationDataHideOnButton()
+  路径：G:/LetsGoDevelop/LetsGo/Content/Feature/NR3E/Script/System/E3/Vocation/
+        Ability/NR3E3_VocationAbility_CTH_TreasureCarry.lua
+
+代码逻辑（与阶段2结构相同）：
+  - OnVocationDataHighLightOnButton()：按钮高亮时触发引导
+  - OnVocationDataHideOnButton()：按钮隐藏时结束引导
+  - PC端：在 K2_ActivateAbility 中通过 EndCurrentGuide(true) 直接完成
+
+------------------------------------------------------------------------
+【阶段4：查看地图引导】
+------------------------------------------------------------------------
+触发时机：玩家成功搬运宝物后（服务端通知客户端宝物搬运成功）
+触发条件：HasFinishGuide(503055/503063) == false
+
+代码位置：
+  NR3E3_VocationAbility_CTH_TreasureCarry.lua -> K2_ReceiveGameplayEventFromSeverWithParameters()
+  路径：同阶段3
+
+代码逻辑：
+  -- 在收到 "Carry_Treasure_Success" 事件后
+  if not HasFinishGuide(503055) then
+      DispatchEvent("ON_NR3E3TreasureHuntRule_Prey_CheckMapGuide")
+  end
+  if not HasFinishGuide(503063) then
+      DispatchEvent("ON_NR3E3TreasureHuntRule_Hunter_CheckMapGuide")
+  end
+
+说明：
+  - 搬运宝物成功后引导玩家查看地图，了解交付点位置
+  - 通过 ShowTreasureItem 界面展示拾取到的宝物信息
+
+------------------------------------------------------------------------
+【阶段5：交付宝藏引导】
+------------------------------------------------------------------------
+触发时机：玩家成功将宝藏交付到回收点后
+触发条件：HasFinishGuide(503057/503065) == false
+
+代码位置：
+  NR3E3_VocationAbility_CTH_TreasureCarry.lua -> K2_ReceiveGameplayEventFromSeverWithParameters()
+  路径：同阶段3
+
+代码逻辑：
+  -- 在收到 "Sell_Treasure_Success" 事件后
+  if not HasFinishGuide(503057) then
+      DispatchEvent("ON_NR3E3TreasureHuntRule_Prey_HandInTreasureGuide")
+  end
+  if not HasFinishGuide(503065) then
+      DispatchEvent("ON_NR3E3TreasureHuntRule_Hunter_HandInTreasureGuide")
+  end
+
+说明：
+  - 交付宝藏后触发引导，引导玩家了解银币收益等信息
+
+------------------------------------------------------------------------
+【阶段6：打开商店引导】
+------------------------------------------------------------------------
+触发时机：商店面板打开时
+触发条件：HasFinishGuide(503068/503069) == false
+
+代码位置：
+  UI_InLevel_NR3E3_TreasureHunt_ShopPanel.lua -> OnOpen()
+  路径：G:/LetsGoDevelop/LetsGo/Content/Feature/NR3E/Script/System/InLevel/
+        UI_NR3E3/TreasureHunt/UI_InLevel_NR3E3_TreasureHunt_ShopPanel.lua
+
+代码逻辑：
+  function UI_InLevel_NR3E3_TreasureHunt_ShopPanel:OnOpen(Data)
+      -- ... 初始化 ...
+      if not _MOE.Models.PlayerGuideModel:HasFinishGuide(503068) then
+          _MOE.EventManager:DispatchEvent("ON_NR3E3TreasureHuntRule_Prey_OpenShopGuide")
+      end
+      if not _MOE.Models.PlayerGuideModel:HasFinishGuide(503069) then
+          _MOE.EventManager:DispatchEvent("ON_NR3E3TreasureHuntRule_Hunter_OpenShopGuide")
+      end
+  end
+
+说明：
+  - 玩家首次打开寻宝商店时触发引导
+  - 引导玩家了解商店购买机制
+
+------------------------------------------------------------------------
+【阶段7：查看宝物提示引导（购买物品飞行特效结束后）】
+------------------------------------------------------------------------
+触发时机：商店购买物品后，飞行特效（Trail）动画播放结束关闭时
+触发条件：HasFinishGuide(503059/503067) == false
+
+代码位置：
+  UI_InLevel_NR3E3_TreasureHunt_Trail.lua -> OnClose()
+  路径：G:/LetsGoDevelop/LetsGo/Content/Feature/NR3E/Script/System/InLevel/
+        UI_NR3E3/TreasureHunt/UI_InLevel_NR3E3_TreasureHunt_Trail.lua
+
+代码逻辑：
+  function UI_InLevel_NR3E3_TreasureHunt_Trail:OnClose()
+      self.Data = nil
+      _NR3E.TimerManager:ClearRefTimers(self)
+      if not _MOE.Models.PlayerGuideModel:HasFinishGuide(503059) then
+          _MOE.EventManager:DispatchEvent("ON_NR3E3TreasureHuntRule_Prey_CheckTreasureGuide")
+      end
+      if not _MOE.Models.PlayerGuideModel:HasFinishGuide(503067) then
+          _MOE.EventManager:DispatchEvent("ON_NR3E3TreasureHuntRule_Hunter_CheckTreasureGuide")
+      end
+  end
+
+说明：
+  - Trail 是商店购买物品后的飞行特效UI（贝塞尔曲线飞行动画）
+  - 飞行特效结束后触发引导，引导玩家查看已获得的物品
+
+================================================================================
+五、教学提示系统（TeachingTips）—— 另一种引导方式
+================================================================================
+
+除了新手引导配置表驱动的引导外，寻宝模式还有一套"教学提示"（TeachingTips）系统，
+基于 NR3E3TipsModel（位于 NR3E/Script/System/E3/Models/NR3E3TipsModel.lua）实现。
+
+寻宝模式相关的 TeachingTipsType 枚举定义（在 NR3E3GameConfig.lua 第1314行起）：
+
+  TeachingTipsType.TreasureProgressReach   = 1000  -- 达到寻宝进度
+  TeachingTipsType.TreasureCarryDelay      = 1001  -- 搬运宝物3秒
+  TeachingTipsType.TreasureMeetingEndToMain = 1002 -- 会议结束回到主界面(寻宝)
+  TeachingTipsType.TreasureAttack          = 1003  -- 摧毁宝物
+
+各触发点说明：
+
+【TreasureProgressReach (1000) - 寻宝进度达成提示】
+  触发位置：UI_InLevel_NR3E3_TreasureHunt_Task.lua -> UpdateUI()
+  触发时机：寻宝进度条动画播放完成后（alpha >= 1.0）
+  代码：
+      _MOE.EventManager:DispatchEvent(NR3E3GameConfig.EventEnum.E3TeachingTips, {
+          Type = NR3E3GameConfig.TeachingTipsType.TreasureProgressReach,
+          Params = {
+              totalProgress = self.TreasureHunt_TotalProgress,
+              curProgress = math.floor(currentProgress)
+          }
+      })
+  检查逻辑：CheckTaskProgressReach（复用普通任务进度检查）
+
+【TreasureCarryDelay (1001) - 搬运宝物3秒提示】
+  触发位置：NR3E3_VocationAbility_CTH_TreasureDrop_New.lua（第56行）
+  触发时机：玩家搬运宝物持续3秒后
+  代码：
+      _MOE.EventManager:DispatchEvent(NR3E3GameConfig.EventEnum.E3TeachingTips, {
+          Type = NR3E3GameConfig.TeachingTipsType.TreasureCarryDelay
+      })
+  检查逻辑：CheckDefault（默认通过）
+
+【TreasureMeetingEndToMain (1002) - 寻宝会议结束回到主界面提示】
+  触发位置：由游戏流程自动触发
+  检查逻辑：CheckTreasureMeetingEndToMain
+      - conditionParams[1] == 0 -> 未搬运宝物时触发
+      - conditionParams[1] == 1 -> 正在搬运宝物时触发
+
+【TreasureAttack (1003) - 摧毁宝物提示】
+  触发位置：NR3E3AbilityActor_TreasureBase.lua（第66行）
+  触发时机：服务端->客户端 通知宝物被摧毁时
+  代码：
+      _MOE.EventManager:DispatchEvent("NR3E_Server2Client",
+          NR3E3GameConfig.EventEnum.E3TeachingTipsS2C,
+          Instigator.UID,
+          NR3E3GameConfig.TeachingTipsType.TreasureAttack,
+          Instigator.UID)
+  检查逻辑：CheckDefault（默认通过）
+
+================================================================================
+六、引导流程图
+================================================================================
+
+以下是寻宝模式新手引导的完整触发流程：
+
+  游戏开始界面（StartView 显示10秒后关闭）
+           |
+           | OnClose()
+           v
+  阶段1:开局引导
+  引导ID: 503052(平民) / 503060(狼人)
+  事件: Prey_StartGameGuide / Hunter_StartGameGuide
+           |
+           | 玩家靠近宝箱，挖宝按钮出现
+           v
+  阶段2:挖宝引导
+  引导ID: 503053/503070(平民) / 503061/503072(狼人)
+  移动端/PC端分开
+           |
+           | 挖宝完成，宝物掉落，搬运按钮出现
+           v
+  阶段3:搬运引导
+  引导ID: 503054/503071(平民) / 503062/503073(狼人)
+  移动端/PC端分开
+           |
+           | 搬运成功（Carry_Treasure_Success）
+           v
+  阶段4:查看地图
+  引导ID: 503055(平民) / 503063(狼人)
+  事件: Prey_CheckMapGuide / Hunter_CheckMapGuide
+           |
+           | 将宝藏搬到回收点交付（Sell_Treasure_Success）
+           v
+  阶段5:交付引导
+  引导ID: 503057(平民) / 503065(狼人)
+  事件: Prey_HandInTreasureGuide / Hunter_HandInTreasureGuide
+           |
+           | 玩家打开商店购买物品
+           v
+  阶段7:商店引导
+  引导ID: 503068(平民) / 503069(狼人)
+  事件: Prey_OpenShopGuide / Hunter_OpenShopGuide
+           |
+           | 购买后飞行特效结束
+           v
+  阶段6:查看物品
+  引导ID: 503059(平民) / 503067(狼人)
+  事件: Prey_CheckTreasureGuide / Hunter_CheckTreasureGuide
+
+  注：阶段6和阶段7的实际触发顺序取决于玩家行为。
+      商店打开时触发阶段7，购买后飞行特效结束时触发阶段6。
+
+================================================================================
+七、涉及的代码文件清单
+================================================================================
+
+1. UI层（引导触发端）
+   G:/LetsGoDevelop/LetsGo/Content/Feature/NR3E/Script/System/InLevel/UI_NR3E3/TreasureHunt/
+   |-- UI_InLevel_NR3E3_TreasureHunt_StartView.lua   -> 开局引导触发
+   |-- UI_InLevel_NR3E3_TreasureHunt_ShopPanel.lua    -> 商店引导触发
+   |-- UI_InLevel_NR3E3_TreasureHunt_Trail.lua        -> 查看物品引导触发
+   |-- UI_InLevel_NR3E3_TreasureHunt_Task.lua         -> 教学提示触发 + 帮助提示
+   |-- UI_InLevel_NR3E3_TreasureHunt_TaskItem.lua     -> 废弃的任务引导（已注释）
+
+2. 技能层（引导触发端）
+   G:/LetsGoDevelop/LetsGo/Content/Feature/NR3E/Script/System/E3/Vocation/Ability/
+   |-- VocationAbility_CTH_OpenTreasureBox.lua         -> 挖宝引导触发
+   |-- NR3E3_VocationAbility_CTH_TreasureCarry.lua     -> 搬运/查看地图/交付引导触发
+   |-- NR3E3_VocationAbility_CTH_TreasureDrop_New.lua  -> 搬运延迟教学提示触发
+
+3. 模型层
+   G:/LetsGoDevelop/LetsGo/Content/LetsGo/Script/Model/Guide/PlayerGuideModel.lua -> 引导判断与管理
+   G:/LetsGoDevelop/LetsGo/Content/Feature/NR3E/Script/System/E3/Models/NR3E3TipsModel.lua -> 教学提示
+
+4. 配置层
+   G:/LetsGoDevelop/LetsGo/Content/LetsGo/Script/Config/NR3E3GameConfig.lua -> TeachingTipsType定义
+
+5. VocationAbilityActor层（服务端事件触发）
+   G:/LetsGoDevelop/LetsGo/Content/Feature/NR3E/Script/System/E3/Vocation/VocationAbilityActor/TreasureHunt/
+   |-- NR3E3AbilityActor_TreasureBase.lua -> TreasureAttack教学提示触发
+
+================================================================================
+                        文档生成日期：2026-03-12
+        本文档基于寻宝模式相关代码中的新手引导逻辑自动分析整理生成
+================================================================================
