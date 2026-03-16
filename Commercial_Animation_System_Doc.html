@@ -1,0 +1,528 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>狼人杀商业动画系统 - 技术文档</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f0f1a;color:#e0e0e0;line-height:1.7}
+.container{max-width:1200px;margin:0 auto;padding:20px 40px}
+h1{font-size:2.4em;color:#00d4ff;text-align:center;margin:40px 0 10px;text-shadow:0 0 20px rgba(0,212,255,0.3)}
+h2{font-size:1.8em;color:#00d4ff;margin:40px 0 20px;padding-bottom:10px;border-bottom:2px solid #1a3a4a}
+h3{font-size:1.3em;color:#7ecfff;margin:25px 0 12px}
+h4{font-size:1.1em;color:#a0d8ef;margin:18px 0 8px}
+p,.desc{margin:10px 0;color:#b0b0c0}
+.subtitle{text-align:center;color:#6a8fa8;font-size:1.1em;margin-bottom:40px}
+.card{background:#161625;border:1px solid #2a2a45;border-radius:12px;padding:24px;margin:16px 0;box-shadow:0 4px 15px rgba(0,0,0,0.3)}
+.card-highlight{border-left:4px solid #00d4ff}
+.card-warn{border-left:4px solid #ffaa00}
+.card-success{border-left:4px solid #00ff88}
+.card-danger{border-left:4px solid #ff4466}
+code{background:#1e1e35;padding:2px 8px;border-radius:4px;font-family:"Fira Code",monospace;font-size:0.9em;color:#ff79c6}
+pre{background:#1a1a2e;border:1px solid #2a2a45;border-radius:8px;padding:16px;overflow-x:auto;margin:12px 0;font-size:0.88em;line-height:1.5}
+pre code{background:none;padding:0;color:#f8f8f2}
+.tag{display:inline-block;padding:3px 12px;border-radius:20px;font-size:0.8em;margin:2px 4px}
+.tag-blue{background:#0a2540;color:#00d4ff;border:1px solid #00d4ff50}
+.tag-green{background:#0a2520;color:#00ff88;border:1px solid #00ff8850}
+.tag-orange{background:#2a1a0a;color:#ffaa00;border:1px solid #ffaa0050}
+.tag-red{background:#2a0a15;color:#ff4466;border:1px solid #ff446650}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:768px){.grid{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;margin:12px 0}
+th{background:#1a2a3a;color:#00d4ff;padding:10px 14px;text-align:left;font-weight:600}
+td{padding:10px 14px;border-bottom:1px solid #1a2a3a}
+tr:hover{background:#1a1a30}
+.badge{display:inline-block;padding:4px 14px;border-radius:6px;font-size:0.85em;font-weight:600;margin:2px}
+.badge-p{background:#0a2540;color:#00d4ff}
+.badge-s{background:#0a2520;color:#00ff88}
+ul,ol{margin:8px 0 8px 24px}
+li{margin:4px 0;color:#b0b0c0}
+.toc{background:#161625;border:1px solid #2a2a45;border-radius:12px;padding:24px;margin:20px 0}
+.toc a{color:#7ecfff;text-decoration:none;display:block;padding:4px 0}
+.toc a:hover{color:#00d4ff;padding-left:8px;transition:all 0.2s}
+.sep{border:0;border-top:1px solid #2a2a45;margin:30px 0}
+.footer{text-align:center;color:#4a5568;padding:40px 0;font-size:0.9em}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>&#127935; 狼人杀商业动画系统</h1>
+<p class="subtitle">Commercial Animation System Technical Documentation</p>
+<p class="subtitle" style="font-size:0.9em;color:#4a5568">文档版本: v2.0 | 更新日期: 2026-03-16</p>
+
+<div class="toc">
+<h3 style="margin-top:0">&#128196; 目录</h3>
+<a href="#overview">1. 系统概览</a>
+<a href="#directory">2. 目录结构</a>
+<a href="#architecture">3. 架构设计</a>
+<a href="#lifecycle">4. 生命周期管理</a>
+<a href="#animation">5. 动画加载与播放机制</a>
+<a href="#camera">6. 相机系统</a>
+<a href="#avatar">7. 角色系统</a>
+<a href="#resource">8. 资源管理与预加载</a>
+<a href="#event">9. 事件驱动架构</a>
+<a href="#config">10. 配置系统</a>
+<a href="#flow">11. 核心流程</a>
+<a href="#pros">12. 系统优点</a>
+<a href="#cons">13. 系统不足与改进建议</a>
+<a href="#summary">14. 总结</a>
+</div>
+
+<hr class="sep">
+
+<h2 id="overview">1. 系统概览</h2>
+<div class="card card-highlight">
+<p>商业动画系统 (Commercial Animation System) 位于 <code>Commercial</code> 目录下，是狼人杀游戏中负责管理各类过场动画的核心子系统。系统采用 <strong>UE4 Level Sequence + Streaming Level</strong> 技术方案，实现了击杀动画、会议报告动画、投票淘汰动画、MVP动画等多种场景类型的加载、播放、切换与销毁。</p>
+<br>
+<p><strong>支持的场景类型：</strong></p>
+<div style="margin-top:10px">
+<span class="tag tag-blue">击杀场景 DeathScene</span>
+<span class="tag tag-blue">会议报告 MeetingReport</span>
+<span class="tag tag-blue">投票淘汰 MeetingOut</span>
+<span class="tag tag-green">MVP展示 MVP</span>
+<span class="tag tag-orange">商店场景 Shop</span>
+<span class="tag tag-orange">商店轮播 ShopCircle</span>
+<span class="tag tag-blue">寻宝PV TreasureHuntPV</span>
+</div>
+</div>
+
+<hr class="sep">
+
+<h2 id="directory">2. 目录结构</h2>
+<div class="card">
+<pre><code>Commercial/
+├── Actions/                                    # 动画行为控制器
+│   ├── BP_...Action_Base.lua                          # 基类 - 生命周期模板
+│   ├── BP_...Action_MVP.lua                           # MVP动画
+│   ├── BP_...Action_DeathScene.lua                    # 击杀场景
+│   ├── BP_...Action_DeathScenRT.lua                   # 击杀场景RT
+│   ├── BP_...Action_MeetingReport.lua                 # 会议报告
+│   ├── BP_...Action_MeetingOut.lua                    # 投票淘汰
+│   ├── BP_...Action_Shop.lua                          # 商店场景
+│   ├── BP_...Action_ShopCircle.lua                    # 商店轮播
+│   ├── BP_...Action_Shop_MVP.lua                      # 商店MVP
+│   ├── BP_...Action_ShopCircle_MVP.lua
+│   ├── BP_...Action_ShopVoteOut.lua
+│   ├── BP_...Action_TreasureHuntPV.lua
+│   └── MVPAnimationConfigs/                           # MVP动画配置 (13套)
+│       ├── ..._AnimationConfig_241002.lua ~ 241015.lua
+├── Actors/                                     # 场景Actor
+│   ├── BP_NR3E3CommercialPreviewAvatar.lua            # 角色预览Actor
+│   ├── BP_NR3E3_Commercial_InLevelPreLoader.lua       # 资源预加载器
+│   ├── BP_NR3E3CommercialSceneCapture2D.lua           # 2D场景截图
+│   └── NR3E3CommercialSceneCameraActor.lua            # 相机Actor
+├── CommercialScene/                            # 核心模型层
+│   ├── NR3ECommercialPreviewModel.lua (68KB)          # 核心Model (大文件)
+│   ├── NR3E3CommercialEquipItemGetterModel.lua        # 装备道具获取
+│   └── NR3ECommercialMountManager.lua                 # Pak包挂载管理
+├── Components/                                 # UE4组件
+│   ├── MoeNR3E3StreamingLevelComponent.lua            # 流式关卡组件
+│   ├── MoeNR3E3CameraControlComponent.lua             # 相机控制组件
+│   └── MoeNR3E3AvatarControlComponent.lua             # 角色控制组件
+└── HelperLib/                                  # 工具库
+    ├── NR3ECommercialSceneCameraAdapter.lua           # 相机屏幕适配器
+    └── NR3E3TableManageHelper.lua                     # 表操作工具
+</code></pre>
+</div>
+
+<hr class="sep">
+
+<h2 id="architecture">3. 架构设计</h2>
+<div class="card card-highlight">
+<h3>3.1 整体架构</h3>
+<p>系统采用 <strong>MVC + 事件驱动</strong> 的混合架构：</p>
+<table>
+<tr><th>层级</th><th>职责</th><th>核心文件</th></tr>
+<tr><td><span class="badge badge-p">Model</span></td><td>数据管理、业务逻辑、请求协调</td><td>NR3ECommercialPreviewModel.lua</td></tr>
+<tr><td><span class="badge badge-s">Action (Controller)</span></td><td>动画播放流程控制</td><td>Actions/ 目录下各Action</td></tr>
+<tr><td><span class="badge badge-p">Component</span></td><td>UE4底层组件封装</td><td>Components/ 目录</td></tr>
+<tr><td><span class="badge badge-s">Helper</span></td><td>通用工具支撑</td><td>HelperLib/ 目录</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>3.2 类继承体系</h3>
+<pre><code>BP_NR3E3CommercialScenePlayAction_Base  (抽象基类)
+  ├── BP_...Action_MVP           (MVP动画)
+  ├── BP_...Action_DeathScene    (击杀场景)
+  ├── BP_...Action_DeathScenRT   (击杀场景RT)
+  ├── BP_...Action_MeetingReport (会议报告)
+  ├── BP_...Action_MeetingOut    (投票淘汰)
+  ├── BP_...Action_Shop          (商店场景)
+  ├── BP_...Action_ShopCircle    (商店轮播)
+  ├── BP_...Action_Shop_MVP      (商店MVP)
+  ├── BP_...Action_ShopCircle_MVP
+  ├── BP_...Action_ShopVoteOut
+  └── BP_...Action_TreasureHuntPV
+</code></pre>
+</div>
+
+<hr class="sep">
+
+<h2 id="lifecycle">4. 生命周期管理</h2>
+<div class="card card-highlight">
+<h3>4.1 基类模板方法</h3>
+<p>基类 <code>BP_NR3E3CommercialScenePlayAction_Base</code> 定义了完整的动画生命周期模板：</p>
+<table>
+<tr><th>方法</th><th>阶段</th><th>说明</th></tr>
+<tr><td><code>CanActive(SceneId)</code></td><td>激活检查</td><td>判断当前场景是否可以激活</td></tr>
+<tr><td><code>Init()</code></td><td>初始化</td><td>注册事件、加载资源、初始化状态</td></tr>
+<tr><td><code>OnStartLoadMap(LevelPath)</code></td><td>加载开始</td><td>关卡开始流式加载</td></tr>
+<tr><td><code>OnMapLoadFinish(LevelInfo)</code></td><td>加载完成</td><td>关卡加载完毕，开始准备动画</td></tr>
+<tr><td><code>OnStartPlayLevelSequence</code></td><td>序列准备</td><td>Level Sequence即将开始播放</td></tr>
+<tr><td><code>OnLevelSequencePlayStart</code></td><td>序列播放</td><td>Level Sequence开始播放</td></tr>
+<tr><td><code>OnLevelSequencePlayFinish</code></td><td>序列结束</td><td>Level Sequence播放完毕</td></tr>
+<tr><td><code>PreUnLoadLevel()</code></td><td>卸载准备</td><td>关卡卸载前的清理工作</td></tr>
+<tr><td><code>OnMapHide(LevelInfo)</code></td><td>隐藏</td><td>关卡隐藏</td></tr>
+<tr><td><code>OnMapUnLoad(LevelInfo)</code></td><td>卸载</td><td>关卡卸载完成</td></tr>
+<tr><td><code>UnInit()</code></td><td>反初始化</td><td>清理事件、定时器、恢复状态</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>4.2 淡入效果与前后台切换</h3>
+<p>基类支持可选的 <strong>FadeIn 淡入效果</strong>（通过 <code>WaitForFadeIn</code> 控制），以及前后台切换事件处理：</p>
+<ul>
+<li>开启淡入时：先显示UI遮罩，延迟0.2秒后执行加载完成逻辑</li>
+<li>通过 <code>CanExecuteLoadFinishAction()</code> 判断淡入完成 + LevelInfo有效后才继续</li>
+<li>注册 <code>ON_APPLICATION_ENTER_BACKGROUND/FOREGROUND</code> 事件处理前后台切换</li>
+</ul>
+</div>
+
+<hr class="sep">
+
+<h2 id="animation">5. 动画加载与播放机制</h2>
+<div class="card card-highlight">
+<h3>5.1 Level Sequence 驱动</h3>
+<p>系统使用 UE4 的 <strong>Level Sequence</strong> 作为核心动画驱动方式：</p>
+<pre><code>-- 序列播放开始时，先暂停序列，等待角色动画准备
+function MVP:OnLevelSequencePlayStart(SequencePlayerActor)
+    local SequencePlayer = SequencePlayerActor:GetSequencePlayer()
+    SequencePlayer:Pause()   -- 先暂停
+
+    -- 0.5秒后播放角色骨骼动画
+    _MOE.TimerManager:AddTimer(0.5, self, function()
+        _MOE.NR3E3_CommonFunc.Animation:PlayMVPAnimations(...)
+    end)
+end
+
+-- 加载完成退出后，恢复序列播放
+function MVP:ResetPlayLevelSequence()
+    SequencePlayer:Play()    -- 恢复播放
+end</code></pre>
+</div>
+
+<div class="card">
+<h3>5.2 骨骼动画序列 (AnimSequence)</h3>
+<table>
+<tr><th>配置字段</th><th>用途</th><th>说明</th></tr>
+<tr><td><code>MVPAnimSequence</code></td><td>单人MVP动画</td><td>标准2/2.5头身角色</td></tr>
+<tr><td><code>TwoPlayerMVPAnimSequence</code></td><td>双人MVP动画</td><td>标准2/2.5头身角色</td></tr>
+<tr><td><code>MVPAnimSequence35</code></td><td>单人3.5头身动画</td><td>3.5头身特殊角色专用</td></tr>
+<tr><td><code>TwoPlayerMVPAnimSequence35</code></td><td>双人3.5头身动画</td><td>3.5头身特殊角色专用</td></tr>
+<tr><td><code>MVPAnimSequenceSpecific</code></td><td>特定角色单人动画</td><td>按角色ID定制，如黄油小熊[412230]</td></tr>
+<tr><td><code>TwoPlayerMVPAnimSequenceSpecific</code></td><td>特定角色双人动画</td><td>按角色ID定制</td></tr>
+<tr><td><code>OtherAnimSequence10P/12P/15P</code></td><td>其他玩家动画</td><td>按人数配置不同分排动画</td></tr>
+</table>
+</div>
+
+<div class="card card-warn">
+<h3>5.3 角色头身比适配</h3>
+<div class="grid">
+<div>
+<h4>标准体型</h4>
+<ul>
+<li><strong>2头身</strong> - 使用标准 <code>MVPAnimSequence</code></li>
+<li><strong>2.5头身</strong> - 使用标准 <code>MVPAnimSequence</code></li>
+</ul>
+</div>
+<div>
+<h4>特殊体型</h4>
+<ul>
+<li><strong>3.5头身</strong> - 使用专用 <code>MVPAnimSequence35</code>（后缀_TF）</li>
+<li><strong>特定角色</strong> - 使用 <code>MVPAnimSequenceSpecific</code>（如Bear）</li>
+</ul>
+</div>
+</div>
+<p style="margin-top:12px">动画匹配优先级：<code>Specific(角色ID定制)</code> &gt; <code>35(3.5头身)</code> &gt; <code>标准动画</code></p>
+</div>
+
+<hr class="sep">
+
+<h2 id="camera">6. 相机系统</h2>
+<div class="card card-highlight">
+<h3>6.1 相机控制组件</h3>
+<p><code>MoeNR3E3CameraControlComponent</code> 负责相机的视角切换：</p>
+<ul>
+<li><code>SetCameraViewTarget(Type, MapName, BlendTime)</code> - 设置相机目标并平滑过渡</li>
+<li><code>RestViewTargetToDefaultCamera(BlendTime)</code> - 恢复默认相机视角</li>
+<li>通过 <code>SetViewTargetWithBlend</code> 实现带混合时间的平滑过渡</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>6.2 屏幕适配器</h3>
+<p><code>NR3ECommercialSceneCameraAdapter</code> 根据屏幕比例动态调整相机距离：</p>
+<pre><code>-- 配置范围: 16:9 ~ 21:9
+-- 线性插值计算调整距离
+AdjustDistance = MinDist + (MaxDist - MinDist)
+    * (viewportRatio - MinRatio) / (MaxRatio - MinRatio)</code></pre>
+<p>确保在不同设备（手机、平板、PC）上都能获得合适的画面构图。</p>
+</div>
+
+<hr class="sep">
+
+<h2 id="avatar">7. 角色系统</h2>
+<div class="card card-highlight">
+<h3>7.1 角色更新流程 (UpdateMVPAvatar)</h3>
+<ol>
+<li><strong>数据校验</strong> - 检查 CallData、MVPAvatarInfo、AvatarCharacterList 是否有效</li>
+<li><strong>定位MVP角色</strong> - 通过UID匹配找到旧MVP Actor</li>
+<li><strong>获取新位置</strong> - 从Level中获取CharacterType=1的新Actor位置</li>
+<li><strong>隐藏所有新Actor</strong> - 先将Level中15个角色位全部隐藏</li>
+<li><strong>逐个分配位置</strong> - 遍历AvatarInfoList，将旧角色移动到新位置</li>
+<li><strong>模型替换</strong> - 根据变身缓存或原始装扮替换模型</li>
+<li><strong>LOD控制</strong> - 非主要角色强制低LOD降低性能开销</li>
+<li><strong>高度修正</strong> - 调用FixHeight修正多排角色的高度对齐</li>
+</ol>
+</div>
+
+<div class="card">
+<h3>7.2 变身缓存机制</h3>
+<pre><code>-- 检查变身缓存
+local ModelIndex = _MOE.NR3E3InLevelModel.MVPModelCache[AvatarInfo.uid]
+if ModelIndex then
+    self:ReplaceCacheAvatar(NewActor, ModelIndex)  -- 有缓存：直接替换骨骼网格体
+else
+    Model:ReplaceAvatarByAvatarInfoList(...)       -- 无缓存：通过装扮信息异步加载
+end</code></pre>
+<p>ReplaceCacheAvatar 核心：隐藏 MasterSkelMeshComp，将 SkinSkelMeshComp 替换为缓存的骨骼网格体。</p>
+</div>
+
+<div class="card">
+<h3>7.3 多排高度修正与LOD控制</h3>
+<ul>
+<li><strong>FixHeight</strong>: 按Row分组(1/2/3排)，分别校准Widget组件高度对齐</li>
+<li><strong>LOD策略</strong>: 单人模式仅主角高LOD；双人模式前2位高LOD，其余低LOD</li>
+</ul>
+</div>
+
+<hr class="sep">
+
+<h2 id="resource">8. 资源管理与预加载</h2>
+<div class="card card-highlight">
+<h3>8.1 预加载系统 (InLevelPreLoader)</h3>
+<p>采用 <strong>Server收集 + Client差量更新</strong> 的模式：</p>
+<h4>Server端 (DS)：</h4>
+<ol>
+<li>游戏开始时收集所有玩家的报告装备场景ID</li>
+<li>监听职业分配完成事件，收集攻击装备场景ID</li>
+<li>场景替换时，清理并重新下发预加载ID列表</li>
+<li>通过 <code>PreLoadIds</code> 属性同步到Client</li>
+</ol>
+<h4>Client端：</h4>
+<ol>
+<li><code>OnRep_PreLoadIds</code> 接收Server同步的ID列表</li>
+<li>与已加载列表对比，计算差量（ToAddList / ToRemoveList）</li>
+<li>新增场景立即预加载（<code>RequestPreLoadMap</code>）</li>
+<li>移除场景延迟卸载，避免动画被中断（会议2s/其他15s）</li>
+</ol>
+</div>
+
+<div class="card">
+<h3>8.2 Streaming Level 流式加载</h3>
+<p><code>MoeNR3E3StreamingLevelComponent</code> 封装了UE4的Level Streaming机制：</p>
+<ul>
+<li><code>Receive_OnLoadStreamLevelFinish</code> - 加载完成后派发事件</li>
+<li><code>Receive_ShowLevel</code> - 显示关卡后派发事件</li>
+<li><code>Receive_UnloadLevel</code> - 卸载关卡后派发事件</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>8.3 Pak包挂载管理</h3>
+<table>
+<tr><th>配置</th><th>包组ID</th><th>游戏类型</th></tr>
+<tr><td>WerewolfMountConfig</td><td>20003, 20005</td><td>狼人杀 (E3=20)</td></tr>
+<tr><td>NR3E0MountConfig</td><td>20009</td><td>E0模式</td></tr>
+<tr><td>NR3E1MountConfig</td><td>20001</td><td>E1模式 (19)</td></tr>
+<tr><td>NR3E2MountConfig</td><td>20002</td><td>E2模式 (18)</td></tr>
+</table>
+</div>
+
+<hr class="sep">
+
+<h2 id="event">9. 事件驱动架构</h2>
+<div class="card card-highlight">
+<table>
+<tr><th>事件</th><th>触发时机</th><th>处理者</th></tr>
+<tr><td><code>ON_PRE_SWITCH_SCENE</code></td><td>场景切换前</td><td>MVP Action - 结束动画</td></tr>
+<tr><td><code>ENTER_LEVEL_LOADING_OUT</code></td><td>加载过渡结束</td><td>MVP Action - 恢复序列</td></tr>
+<tr><td><code>ON_COMMERCIAL_LEVEL_LOAD_FINISH</code></td><td>关卡加载完成</td><td>Model层 - 触发后续逻辑</td></tr>
+<tr><td><code>ON_NR3E3_COMMERCIAL_LEVEL_UNLOAD_FINISH</code></td><td>关卡卸载完成</td><td>Model层 - 清理资源</td></tr>
+<tr><td><code>ON_ENTER_SUB_GAME_START</code></td><td>子游戏开始</td><td>PreLoader - 开始预加载</td></tr>
+<tr><td><code>ON_NR3E3_VOCATION_REQUESTED_FINISH</code></td><td>职业分配完成</td><td>PreLoader - 补充攻击场景</td></tr>
+<tr><td><code>ON_NR3E3_REPLACE_NEW_SCENE_ID</code></td><td>场景ID替换</td><td>PreLoader - 刷新列表</td></tr>
+<tr><td><code>NR3E_OPEN_COMMERCIAL_WINDOW</code></td><td>商业窗口打开</td><td>MVP Action - 打开特定UI</td></tr>
+</table>
+</div>
+
+<hr class="sep">
+
+<h2 id="config">10. 配置系统</h2>
+<div class="card card-highlight">
+<h3>MVP动画配置 (13套: 241002~241015)</h3>
+<pre><code>-- 示例: 241012 - 黄油小熊主题
+{
+    MVPAnimSequence            = { "AS_NR3E3_CH_Mvp10_001", "AS_NR3E3_CH_Mvp10_002" },
+    TwoPlayerMVPAnimSequence   = { "AS_NR3E3_CH_Mvp10_003", "AS_NR3E3_CH_Mvp10_004" },
+    MVPAnimSequence35          = { "..._001_TF", "..._002_TF" },
+    TwoPlayerMVPAnimSequence35 = { "..._003_TF", "..._004_TF" },
+    MVPAnimSequenceSpecific    = {
+        [412230] = { "..._Bear_001", "..._Bear_002" },  -- 黄油小熊
+        [411730] = { "..._001_TF", "..._002_TF" }
+    },
+    OtherAnimSequence10P/12P/15P = { ... }  -- 按人数配角动画
+}</code></pre>
+</div>
+
+<hr class="sep">
+
+<h2 id="flow">11. 核心流程</h2>
+<div class="card card-highlight">
+<h3>11.1 MVP动画完整播放流程</h3>
+<pre><code>1. Init()
+   ├─ 注册事件(场景切换/加载退出)
+   ├─ 隐藏反射球, 注册特殊UI窗口
+   └─ 预创建AvatarPreviewActor
+
+2. OnMapLoadFinish(LevelInfo)
+   ├─ 调用基类处理, 开启场景灯光
+   ├─ 设置场景相机
+   ├─ UpdateMVPAvatar() -> 角色换装/定位
+   ├─ 判断MVPUID显隐角色
+   └─ UpdateCamera() -> 相机偏移
+
+3. OnLevelSequencePlayStart()
+   ├─ 暂停Level Sequence
+   ├─ 收集场景内角色Actor
+   └─ 0.5秒后播放骨骼动画
+
+4. OnEnterLevelLoadingOut()
+   └─ 0.5秒后恢复Level Sequence播放
+
+5. OnLevelSequencePlayFinish()
+   ├─ 调用基类清理多播事件
+   └─ 重新播放MVP循环动画
+
+6. Finish()
+   ├─ 调用UnInit()清理
+   └─ 1秒后请求结束预览动作</code></pre>
+</div>
+
+<div class="card">
+<h3>11.2 预加载流程</h3>
+<pre><code>Server端:
+  1. 游戏开始 -> 收集报告装备场景ID
+  2. 职业分配 -> 收集攻击装备场景ID
+  3. 场景替换 -> 全量刷新预加载列表
+  4. PreLoadIds属性同步到Client
+
+Client端:
+  1. OnRep_PreLoadIds -> 接收ID列表
+  2. 差量计算 -> ToAddList / ToRemoveList
+  3. 新增项 -> 立即预加载
+  4. 移除项 -> 延迟卸载(会议2s/其他15s)</code></pre>
+</div>
+
+<hr class="sep">
+
+<h2 id="pros">12. 系统优点</h2>
+<div class="grid">
+<div class="card card-success">
+<h4>&#10004; 良好的继承体系</h4>
+<p>Base基类定义完整的生命周期模板方法，子类按需重写，代码复用度高。</p>
+</div>
+<div class="card card-success">
+<h4>&#10004; 数据驱动配置</h4>
+<p>13套MVP动画配置独立管理，支持单人/双人/多人，且能针对特定角色ID定制动画。</p>
+</div>
+<div class="card card-success">
+<h4>&#10004; 完善的预加载机制</h4>
+<p>Server收集、Client差量更新减少IO，延迟卸载避免动画中断。</p>
+</div>
+<div class="card card-success">
+<h4>&#10004; 多体型适配</h4>
+<p>为2头身、2.5头身、3.5头身及特殊角色提供完整的动画适配方案。</p>
+</div>
+<div class="card card-success">
+<h4>&#10004; 事件解耦架构</h4>
+<p>组件间通过事件通信，降低耦合度。</p>
+</div>
+<div class="card card-success">
+<h4>&#10004; 多设备屏幕适配</h4>
+<p>CameraAdapter在16:9到21:9范围内自动调整相机距离。</p>
+</div>
+</div>
+
+<hr class="sep">
+
+<h2 id="cons">13. 系统不足与改进建议</h2>
+<div class="grid">
+<div class="card card-danger">
+<h4>&#9888; 核心Model文件过大</h4>
+<p>NR3ECommercialPreviewModel.lua 高达 68KB。建议按功能拆分为多个子Model。</p>
+</div>
+<div class="card card-danger">
+<h4>&#9888; 魔法数字较多</h4>
+<p>硬编码 3000000、25、15、241012 等。建议提取为命名常量。</p>
+</div>
+<div class="card card-danger">
+<h4>&#9888; 调试日志未清理</h4>
+<p>大量 kfc1 前缀调试日志残留。建议统一日志前缀并分级控制。</p>
+</div>
+<div class="card card-danger">
+<h4>&#9888; 定时器依赖过重</h4>
+<p>多处使用固定时长定时器(0.5s~15s)衔接流程。建议改用回调机制。</p>
+</div>
+<div class="card card-warn">
+<h4>&#9888; 部分同步加载</h4>
+<p>UE4.LoadObject 为同步加载，可能导致卡顿。建议改用异步加载。</p>
+</div>
+<div class="card card-warn">
+<h4>&#9888; 注释不规范</h4>
+<p>部分函数缺少注释，中英文混杂。建议统一注释规范。</p>
+</div>
+</div>
+
+<hr class="sep">
+
+<h2 id="summary">14. 总结</h2>
+<div class="card card-highlight">
+<p>狼人杀商业动画系统是一套基于 <strong>UE4 Level Sequence + Streaming Level</strong> 的成熟过场动画解决方案。通过良好的继承体系、事件驱动架构和数据驱动配置，实现了多种场景类型的统一管理。系统特别在多体型角色适配（2头身/2.5头身/3.5头身）、预加载机制、变身缓存等方面表现出色。</p>
+<br>
+<p><strong>核心技术栈：</strong></p>
+<div style="margin-top:10px">
+<span class="tag tag-blue">UE4 Level Sequence</span>
+<span class="tag tag-blue">Streaming Level</span>
+<span class="tag tag-green">Lua (UnLua)</span>
+<span class="tag tag-green">AnimSequence</span>
+<span class="tag tag-orange">Chunk Pak</span>
+<span class="tag tag-orange">事件驱动</span>
+<span class="tag tag-blue">LOD优化</span>
+<span class="tag tag-green">异步加载</span>
+</div>
+<br>
+<p>后续建议重点关注：核心Model拆分、魔法数字消除、定时器替换为回调机制、同步加载改异步，以进一步提升系统的可维护性和运行性能。</p>
+</div>
+
+<div class="footer">
+<p>Commercial Animation System Documentation v2.0</p>
+<p>Generated on 2026-03-16 | LetsGo Project</p>
+</div>
+
+</div>
+</body>
+</html>
