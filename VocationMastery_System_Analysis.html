@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -196,6 +196,15 @@
             .container { padding: 20px 12px; } .feature-grid { grid-template-columns: 1fr; }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        .mermaid-section { margin-top: 32px; }
+        .mermaid-section h3 { color: var(--primary); margin-bottom: 16px; font-size: 1.15em; display: flex; align-items: center; gap: 8px; }
+        .mermaid-section h3 .m-icon { font-size: 1.3em; }
+        .mermaid-wrapper { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 30px; overflow-x: auto; margin-bottom: 24px; }
+        .mermaid { display: flex; justify-content: center; }
+        .mermaid svg { max-width: 100%; height: auto; }
+    </style>
 </head>
 <body>
 <div class="hero">
@@ -211,8 +220,9 @@
     <a href="#techstack">技术栈</a>
     <a href="#patterns">设计模式</a>
     <a href="#proscons">优缺点</a>
-    <a href="#dataflow">数据流程</a>
     <a href="#suggestions">改进建议</a>
+    <a href="#dataflow">数据流程</a>
+    <a href="#mermaid-diagrams">可视化交互流程图</a>
 </div>
 <div class="container">
     <div class="section" id="overview">
@@ -453,6 +463,40 @@
             </div>
         </div>
     </div>
+    <div class="section" id="suggestions">
+        <div class="section-title">
+            <span class="icon">&#x1F4A1;</span>
+            <h2>改进建议</h2>
+            <span class="badge">SUGGESTIONS</span>
+        </div>
+        <div class="suggestion-list">
+            <div class="suggestion-item">
+                <div class="sug-num">1</div>
+                <div class="sug-text"><strong>拆分 PreparationsModel</strong> &#8212; 将狼人专精相关逻辑独立为 <code>VocationMasteryModel</code>，降低单文件复杂度（当前3565行），提升可维护性</div>
+            </div>
+            <div class="suggestion-item">
+                <div class="sug-num">2</div>
+                <div class="sug-text"><strong>提取布局/进度条计算常量</strong> &#8212; 将 <code>355.0</code>、<code>236.0</code>、<code>278.0</code>、<code>0.29</code>、<code>0.35</code> 等 Magic Number 定义为命名常量，增强代码可读性</div>
+            </div>
+            <div class="suggestion-item">
+                <div class="sug-num">3</div>
+                <div class="sug-text"><strong>统一红点管理逻辑</strong> &#8212; 将分散在 <code>VocationItem</code>、<code>VocationMain</code>、<code>PreparationsModel</code> 中的红点逻辑集中到 Model 层处理，消除冗余</div>
+            </div>
+            <div class="suggestion-item">
+                <div class="sug-num">4</div>
+                <div class="sug-text"><strong>增加核心算法的文档注释</strong> &#8212; 尤其是进度条分段计算公式（首段/次段/末段的 minPx、progress 计算逻辑），便于后续维护理解</div>
+            </div>
+            <div class="suggestion-item">
+                <div class="sug-num">5</div>
+                <div class="sug-text"><strong>消除硬编码</strong> &#8212; 将特殊职业ID（<code>45/46/47</code>）、设备型号列表等配置化管理，避免散布在业务逻辑中</div>
+            </div>
+            <div class="suggestion-item">
+                <div class="sug-num">6</div>
+                <div class="sug-text"><strong>统一内存清理规范</strong> &#8212; 在 <code>OnClose</code> 中建立统一的资源释放模式，避免遗漏导致内存泄漏</div>
+            </div>
+        </div>
+    </div>
+
     <div class="section" id="dataflow">
         <div class="section-title">
             <span class="icon">&#x1F504;</span>
@@ -544,43 +588,235 @@
             </div>
         </div>
     </div>
-    <div class="section" id="suggestions">
+</div>
+
+    <div class="section" id="mermaid-diagrams">
         <div class="section-title">
-            <span class="icon">&#x1F4A1;</span>
-            <h2>改进建议</h2>
-            <span class="badge">SUGGESTIONS</span>
+            <span class="icon">&#x1F4CA;</span>
+            <h2>&#x53EF;&#x89C6;&#x5316;&#x4EA4;&#x4E92;&#x6D41;&#x7A0B;&#x56FE;</h2>
+            <span class="badge">DIAGRAMS</span>
         </div>
-        <div class="suggestion-list">
-            <div class="suggestion-item">
-                <div class="sug-num">1</div>
-                <div class="sug-text"><strong>拆分 PreparationsModel</strong> &#8212; 将狼人专精相关逻辑独立为 <code>VocationMasteryModel</code>，降低单文件复杂度（当前3565行），提升可维护性</div>
+
+        <div class="mermaid-section">
+            <h3><span class="m-icon">&#x1F4AC;</span> &#x6838;&#x5FC3;&#x4EA4;&#x4E92;&#x65F6;&#x5E8F;&#x56FE;&#xFF08;Sequence Diagram&#xFF09;</h3>
+            <div class="mermaid-wrapper">
+                <pre class="mermaid">
+sequenceDiagram
+    participant U as Player
+    participant VM as VocationMastery
+    participant VMain as VocationMain
+    participant VItem as VocationItem
+    participant JI as JobInfo
+    participant PI as ProgressItem
+    participant M as PreparationsModel
+    participant S as Server
+
+    U->>VM: Open Mastery UI
+    activate VM
+    VM->>M: ReqWolfKillRoleInfoReward()
+    M->>S: WolfKillRoleInfoRewardRedDot_C2S
+    S-->>M: RedDot Data
+    M-->>VM: Event RedDot Update
+
+    VM->>VMain: AddView(VocationMain)
+    activate VMain
+    VMain->>M: GetVocationInVerData()
+    VMain->>M: RequestVocationMainInfo()
+    M->>S: LetsGoGetWolfKillRoleInfo_C2S
+    S-->>M: Role Score Data
+    M-->>VMain: Event Data Ready
+
+    VMain->>VMain: SortVocation()
+    VMain->>VMain: CreateVocationItem() Batch Frame
+
+    loop Each Vocation
+        VMain->>VItem: AddWidget(VocationItem, data)
+        VItem->>VItem: RefreshNewTip()
+        VItem->>VItem: RefreshState()
+    end
+
+    U->>VItem: Click Card
+    VItem->>VItem: RefreshRedDotData(true)
+    VItem->>VMain: DispatchEvent(OPENITEM)
+
+    VMain->>JI: OpenWindow(JobInfo)
+    activate JI
+    JI->>S: WolfKillRoleInfoReward_C2S
+    S-->>JI: Reward Status
+
+    JI->>JI: Create 3 Tabs
+
+    loop Each Reward Node
+        JI->>PI: AddWidget(ProgressItem)
+        PI->>PI: InitUI() Progress Bar
+    end
+
+    U->>PI: Claim Reward (recv==0)
+    PI->>S: WolfKillRoleInfoRewardRecv_C2S
+    S-->>PI: Success
+
+    PI->>M: UpdateRedDot()
+    PI->>VItem: DispatchEvent(REFRESHREDDOT)
+    PI->>JI: Event(RewardReceived)
+
+    Note over PI: If IdentifyDecorate Item Open Reward Popup
+
+    deactivate JI
+    deactivate VMain
+    deactivate VM
+                </pre>
             </div>
-            <div class="suggestion-item">
-                <div class="sug-num">2</div>
-                <div class="sug-text"><strong>提取布局/进度条计算常量</strong> &#8212; 将 <code>355.0</code>、<code>236.0</code>、<code>278.0</code>、<code>0.29</code>、<code>0.35</code> 等 Magic Number 定义为命名常量，增强代码可读性</div>
+        </div>
+
+        <div class="mermaid-section">
+            <h3><span class="m-icon">&#x1F513;</span> &#x8EAB;&#x4EFD;&#x89E3;&#x9501;&#x5224;&#x5B9A;&#x6D41;&#x7A0B;&#xFF08;Flowchart&#xFF09;</h3>
+            <div class="mermaid-wrapper">
+                <pre class="mermaid">
+flowchart TD
+    A([Start Check Unlock]) --> B{DefaultUnLock == 1?}
+    B -->|Yes| C[Default Unlocked priority = 2]
+    B -->|No| D{Server Score gt 0?}
+    D -->|Yes| E[Score Unlocked priority = 1]
+    D -->|No| F{ItemUnlock ID != 0?}
+    F -->|No| G[Locked priority = 3]
+    F -->|Yes| H[Query Bag GetItemUUId]
+    H --> I{Item Exists?}
+    I -->|No| G
+    I -->|Yes| J{expireMs == 0?}
+    J -->|Yes| K[Permanent Unlock priority = 2]
+    J -->|No| L{IsExpire?}
+    L -->|Yes| G
+    L -->|No| M{lessorUid==0 and expireMs gt 0?}
+    M -->|Yes| N[Trial Vocation priority = 2]
+    M -->|No| O{IsTreasureSharedItem?}
+    O -->|Yes| P[Shared Vocation priority = 2]
+    O -->|No| N
+
+    style A fill:#6c5ce7,color:#fff,stroke:none
+    style E fill:#00b894,color:#fff,stroke:none
+    style C fill:#00b894,color:#fff,stroke:none
+    style K fill:#00b894,color:#fff,stroke:none
+    style G fill:#e17055,color:#fff,stroke:none
+    style N fill:#fdcb6e,color:#2d3436,stroke:none
+    style P fill:#74b9ff,color:#fff,stroke:none
+                </pre>
             </div>
-            <div class="suggestion-item">
-                <div class="sug-num">3</div>
-                <div class="sug-text"><strong>统一红点管理逻辑</strong> &#8212; 将分散在 <code>VocationItem</code>、<code>VocationMain</code>、<code>PreparationsModel</code> 中的红点逻辑集中到 Model 层处理，消除冗余</div>
+        </div>
+
+        <div class="mermaid-section">
+            <h3><span class="m-icon">&#x1F534;</span> &#x7EA2;&#x70B9;&#x7CFB;&#x7EDF;&#x5C42;&#x7EA7;&#x4E0E;&#x66F4;&#x65B0;&#x6D41;&#x7A0B;&#xFF08;Flowchart&#xFF09;</h3>
+            <div class="mermaid-wrapper">
+                <pre class="mermaid">
+flowchart LR
+    subgraph Data_Source
+        S1[Server red_dot field]
+        S2[Local Cache ClientCacheData]
+    end
+
+    subgraph RedDot_Hierarchy
+        L1[VocationMastery Sidebar]
+        L2[Tab Category]
+        L3[VocationItem Card]
+    end
+
+    subgraph RedDot_Style
+        D1[Dot Style - Has Reward]
+        D2[New Style - Unseen Vocation]
+    end
+
+    S1 -->|Reward Available| D1
+    S2 -->|Unseen Vocation| D2
+    D1 --> L3
+    D2 --> L3
+    L3 -->|Aggregate| L2
+    L2 -->|Aggregate| L1
+
+    subgraph Update_Triggers
+        T1[Claim Reward] -->|red_dot minus 1| S1
+        T2[View Vocation] -->|Write Cache| S2
+        T3[Item Changed] -->|Recalculate| L3
+    end
+
+    style L1 fill:#e17055,color:#fff,stroke:none
+    style L2 fill:#e17055,color:#fff,stroke:none
+    style L3 fill:#e17055,color:#fff,stroke:none
+    style D1 fill:#e17055,color:#fff,stroke:none
+    style D2 fill:#6c5ce7,color:#fff,stroke:none
+                </pre>
             </div>
-            <div class="suggestion-item">
-                <div class="sug-num">4</div>
-                <div class="sug-text"><strong>增加核心算法的文档注释</strong> &#8212; 尤其是进度条分段计算公式（首段/次段/末段的 minPx、progress 计算逻辑），便于后续维护理解</div>
-            </div>
-            <div class="suggestion-item">
-                <div class="sug-num">5</div>
-                <div class="sug-text"><strong>消除硬编码</strong> &#8212; 将特殊职业ID（<code>45/46/47</code>）、设备型号列表等配置化管理，避免散布在业务逻辑中</div>
-            </div>
-            <div class="suggestion-item">
-                <div class="sug-num">6</div>
-                <div class="sug-text"><strong>统一内存清理规范</strong> &#8212; 在 <code>OnClose</code> 中建立统一的资源释放模式，避免遗漏导致内存泄漏</div>
+        </div>
+
+        <div class="mermaid-section">
+            <h3><span class="m-icon">&#x1F4CA;</span> &#x4E13;&#x7CBE;&#x5956;&#x52B1;&#x8FDB;&#x5EA6;&#x6761;&#x6E32;&#x67D3;&#x903B;&#x8F91;&#xFF08;Flowchart&#xFF09;</h3>
+            <div class="mermaid-wrapper">
+                <pre class="mermaid">
+flowchart TD
+    START([ProgressItem InitUI]) --> CHECK{isFirst?}
+    CHECK -->|Yes| F1[Width 355px Switcher=0]
+    F1 --> F2[total = rewardScore + next-reward x 0.29]
+    F2 --> F3[progress = min curScore/total 1]
+    F3 --> F4[Indicator pos 278 x progress + 78]
+
+    CHECK -->|No| M1{isLast?}
+    M1 -->|Yes| L1[Width 236px Switcher=2]
+    M1 -->|No| M2[Width 236px Switcher=1]
+
+    M2 --> C1[minPx = isSecond? 0.29 else 0.35]
+    L1 --> C1
+    C1 --> C2[minValue = lastScore + reward-last x minPx]
+    C2 --> C3[maxValue = rewardScore + next-reward x 0.35]
+    C3 --> C4{curScore gte rewardScore?}
+    C4 -->|Yes| C5[Back half 0.65 + cur/total x 0.35]
+    C4 -->|No| C6[Front half min cur/total 1]
+
+    C5 --> RENDER
+    C6 --> RENDER
+    F4 --> RENDER
+
+    RENDER([Render Progress Bar])
+    RENDER --> RS{recv Status}
+    RS -->|recv == -1| RS1[Locked Show Lock Icon]
+    RS -->|recv == 0| RS2[Claimable Play Loop Anim]
+    RS -->|recv == 1| RS3[Claimed Show Done Mask]
+
+    style START fill:#6c5ce7,color:#fff,stroke:none
+    style RENDER fill:#00b894,color:#fff,stroke:none
+    style RS1 fill:#636e72,color:#fff,stroke:none
+    style RS2 fill:#fdcb6e,color:#2d3436,stroke:none
+    style RS3 fill:#00b894,color:#fff,stroke:none
+                </pre>
             </div>
         </div>
     </div>
-</div>
 <div class="footer">
     <p>&#x1F43A; 狼人专精系统分析文档 &nbsp;|&nbsp; 基于 Lua + UE4/UMG + _MOE 框架</p>
     <p style="margin-top: 8px; font-size: 0.85em; color: #b2bec3;">本文档由代码分析自动生成</p>
 </div>
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        securityLevel: 'loose',
+        sequence: {
+            diagramMarginX: 20,
+            diagramMarginY: 20,
+            actorMargin: 60,
+            width: 180,
+            height: 50,
+            boxMargin: 10,
+            noteMargin: 10,
+            messageMargin: 40,
+            mirrorActors: false,
+            useMaxWidth: true,
+            wrap: true
+        },
+        flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: 'basis',
+            padding: 15
+        }
+    });
+</script>
 </body>
 </html>
