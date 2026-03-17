@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>狼人专精系统 - 全面梳理与分析</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --danger: #e17055;
+            --info: #74b9ff;
+            --dark: #2d3436;
+            --gray: #636e72;
+            --light: #dfe6e9;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.12);
+            --radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg); color: var(--dark); line-height: 1.8;
+        }
+        .hero {
+            background: linear-gradient(135deg, #2d3436 0%, #636e72 50%, #6c5ce7 100%);
+            color: white; padding: 60px 40px; text-align: center; position: relative; overflow: hidden;
+        }
+        .hero::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(108, 92, 231, 0.15) 0%, transparent 70%);
+            animation: pulse 6s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 1; } }
+        .hero h1 { font-size: 2.8em; margin-bottom: 12px; position: relative; z-index: 1; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .hero .subtitle { font-size: 1.2em; opacity: 0.85; position: relative; z-index: 1; }
+        .hero .meta { margin-top: 20px; font-size: 0.9em; opacity: 0.7; position: relative; z-index: 1; }
+        .nav {
+            background: var(--card-bg); box-shadow: var(--shadow); padding: 16px 40px;
+            position: sticky; top: 0; z-index: 100; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+        }
+        .nav a {
+            color: var(--gray); text-decoration: none; padding: 8px 18px; border-radius: 20px;
+            font-size: 0.9em; font-weight: 500; transition: all 0.3s; border: 1px solid transparent;
+        }
+        .nav a:hover { color: var(--primary); background: rgba(108, 92, 231, 0.08); border-color: var(--primary-light); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .section { margin-bottom: 48px; }
+        .section-title {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+            padding-bottom: 12px; border-bottom: 3px solid var(--primary);
+        }
+        .section-title .icon { font-size: 1.6em; }
+        .section-title h2 { font-size: 1.7em; color: var(--dark); }
+        .section-title .badge {
+            background: var(--primary); color: white; padding: 3px 12px; border-radius: 12px;
+            font-size: 0.7em; font-weight: 600;
+        }
+        .card {
+            background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 28px; margin-bottom: 20px; transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+        .card h3 { color: var(--primary); margin-bottom: 12px; font-size: 1.2em; }
+        .card p, .card li { color: var(--gray); line-height: 1.9; }
+        .arch-diagram {
+            background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 30px; overflow-x: auto;
+        }
+        .arch-layers { display: flex; flex-direction: column; gap: 24px; min-width: 900px; }
+        .arch-layer {
+            border: 2px solid var(--light); border-radius: var(--radius); padding: 20px; position: relative;
+        }
+        .arch-layer .layer-label {
+            position: absolute; top: -12px; left: 20px; background: var(--card-bg);
+            padding: 0 12px; font-weight: 700; font-size: 0.9em; color: var(--primary); letter-spacing: 1px;
+        }
+        .arch-boxes { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 8px; }
+        .arch-box {
+            padding: 12px 18px; border-radius: 8px; font-size: 0.85em; font-weight: 600;
+            text-align: center; min-width: 140px; transition: transform 0.2s; cursor: default;
+        }
+        .arch-box:hover { transform: scale(1.05); }
+        .arch-box.ui { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+        .arch-box.model { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+        .arch-box.server { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+        .arch-box.config { background: #f3e5f5; color: #7b1fa2; border: 1px solid #ce93d8; }
+        .arch-arrow { text-align: center; color: var(--gray); font-size: 1.5em; padding: 4px 0; }
+        .styled-table {
+            width: 100%; border-collapse: separate; border-spacing: 0;
+            border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
+        }
+        .styled-table thead { background: linear-gradient(135deg, var(--primary), var(--primary-light)); }
+        .styled-table thead th { color: white; padding: 16px 20px; text-align: left; font-weight: 600; font-size: 0.95em; }
+        .styled-table tbody tr { background: var(--card-bg); transition: background 0.2s; }
+        .styled-table tbody tr:hover { background: rgba(108, 92, 231, 0.04); }
+        .styled-table tbody tr:nth-child(even) { background: #fafafa; }
+        .styled-table tbody tr:nth-child(even):hover { background: rgba(108, 92, 231, 0.04); }
+        .styled-table tbody td { padding: 14px 20px; border-bottom: 1px solid #eee; font-size: 0.9em; }
+        .styled-table code { background: #f1f2f6; padding: 2px 8px; border-radius: 4px; font-size: 0.88em; color: var(--primary); }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .feature-card {
+            background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 24px; border-left: 4px solid var(--primary); transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .feature-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+        .feature-card .feature-num {
+            display: inline-block; background: var(--primary); color: white; width: 32px; height: 32px;
+            line-height: 32px; text-align: center; border-radius: 50%; font-weight: 700; font-size: 0.9em; margin-bottom: 10px;
+        }
+        .feature-card h4 { color: var(--dark); margin-bottom: 8px; font-size: 1.1em; }
+        .feature-card ul { padding-left: 18px; color: var(--gray); }
+        .feature-card li { margin-bottom: 4px; font-size: 0.9em; }
+        .code-block {
+            background: #2d3436; color: #dfe6e9; padding: 20px 24px; border-radius: 8px;
+            font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.88em; line-height: 1.7; overflow-x: auto; margin: 12px 0;
+        }
+        .code-block .comment { color: #636e72; }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 768px) { .pros-cons { grid-template-columns: 1fr; } }
+        .pros-card, .cons-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px; }
+        .pros-card { border-top: 4px solid var(--success); }
+        .cons-card { border-top: 4px solid var(--danger); }
+        .pros-card h3 { color: var(--success); }
+        .cons-card h3 { color: var(--danger); }
+        .pros-card li, .cons-card li { margin-bottom: 10px; font-size: 0.92em; color: var(--gray); }
+        .pros-card li strong, .cons-card li strong { color: var(--dark); }
+        .pros-card ul, .cons-card ul { padding-left: 20px; }
+        .flow-container {
+            background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 30px; overflow-x: auto;
+        }
+        .flow-steps { display: flex; flex-direction: column; gap: 0; min-width: 700px; }
+        .flow-step { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; position: relative; }
+        .flow-step::before {
+            content: ''; position: absolute; left: 24px; top: 48px; bottom: -16px;
+            width: 2px; background: var(--light);
+        }
+        .flow-step:last-child::before { display: none; }
+        .flow-dot {
+            width: 48px; height: 48px; min-width: 48px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-weight: 700; font-size: 1.1em; color: white; z-index: 1;
+        }
+        .flow-dot.user { background: var(--primary); }
+        .flow-dot.client { background: var(--success); }
+        .flow-dot.server { background: var(--danger); }
+        .flow-dot.model { background: var(--info); }
+        .flow-content { flex: 1; }
+        .flow-content .flow-title { font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+        .flow-content .flow-desc { color: var(--gray); font-size: 0.9em; }
+        .flow-content .flow-tag {
+            display: inline-block; background: #f1f2f6; color: var(--gray);
+            padding: 2px 10px; border-radius: 10px; font-size: 0.8em; margin-top: 4px;
+        }
+        .tech-tags { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+        .tech-tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+            border-radius: 20px; font-size: 0.88em; font-weight: 600; transition: transform 0.2s;
+        }
+        .tech-tag:hover { transform: scale(1.05); }
+        .tech-tag.lua { background: #000080; color: white; }
+        .tech-tag.ue4 { background: #2d3436; color: white; }
+        .tech-tag.moe { background: #6c5ce7; color: white; }
+        .tech-tag.proto { background: #00b894; color: white; }
+        .tech-tag.cache { background: #fdcb6e; color: #2d3436; }
+        .tech-tag.umg { background: #e17055; color: white; }
+        .pattern-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 16px; }
+        .pattern-card {
+            background: linear-gradient(135deg, #f8f9fa, #ffffff); border: 1px solid var(--light);
+            border-radius: 10px; padding: 18px; text-align: center; transition: all 0.3s;
+        }
+        .pattern-card:hover { border-color: var(--primary-light); box-shadow: 0 4px 15px rgba(108, 92, 231, 0.1); }
+        .pattern-card .pattern-icon { font-size: 2em; margin-bottom: 8px; }
+        .pattern-card h4 { color: var(--dark); margin-bottom: 6px; }
+        .pattern-card p { color: var(--gray); font-size: 0.85em; }
+        .suggestion-list { display: flex; flex-direction: column; gap: 16px; }
+        .suggestion-item {
+            background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 20px 24px; display: flex; align-items: flex-start; gap: 16px;
+            border-left: 4px solid var(--info); transition: transform 0.2s;
+        }
+        .suggestion-item:hover { transform: translateX(4px); }
+        .suggestion-item .sug-num {
+            background: var(--info); color: white; width: 30px; height: 30px; min-width: 30px;
+            line-height: 30px; text-align: center; border-radius: 50%; font-weight: 700; font-size: 0.85em;
+        }
+        .suggestion-item .sug-text { color: var(--gray); font-size: 0.93em; }
+        .suggestion-item .sug-text strong { color: var(--dark); }
+        .footer { text-align: center; padding: 40px; color: var(--gray); font-size: 0.85em; border-top: 1px solid var(--light); margin-top: 40px; }
+        @media (max-width: 768px) {
+            .hero { padding: 40px 20px; } .hero h1 { font-size: 2em; }
+            .container { padding: 20px 12px; } .feature-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="hero">
+    <h1>&#x1F43A; 狼人专精系统</h1>
+    <div class="subtitle">VocationMastery &#8212; 全面梳理与分析报告</div>
+    <div class="meta">基于 Lua + UE4/UMG + _MOE 框架 &nbsp;|&nbsp; 系统分析文档</div>
+</div>
+<div class="nav">
+    <a href="#overview">系统概述</a>
+    <a href="#architecture">系统架构</a>
+    <a href="#files">文件职责</a>
+    <a href="#features">核心功能</a>
+    <a href="#techstack">技术栈</a>
+    <a href="#patterns">设计模式</a>
+    <a href="#proscons">优缺点</a>
+    <a href="#dataflow">数据流程</a>
+    <a href="#suggestions">改进建议</a>
+</div>
+<div class="container">
+    <div class="section" id="overview">
+        <div class="section-title">
+            <span class="icon">&#x1F4CB;</span>
+            <h2>系统概述</h2>
+            <span class="badge">OVERVIEW</span>
+        </div>
+        <div class="card">
+            <p>狼人专精系统（VocationMastery）是狼人杀游戏中的<strong>身份（职业）专精管理系统</strong>，负责展示玩家拥有的所有狼人杀身份、各身份的战绩数据、技巧说明、专精奖励领取、身份排行等功能。</p>
+            <br>
+            <p>整个系统基于 <strong>Lua + UE4/UMG</strong> 构建，采用 <strong>MVC + 事件驱动</strong> 架构，通过配置表驱动数据，通过服务端协议获取玩家战绩和奖励状态。</p>
+        </div>
+    </div>
+    <div class="section" id="architecture">
+        <div class="section-title">
+            <span class="icon">&#x1F3D7;&#xFE0F;</span>
+            <h2>系统架构</h2>
+            <span class="badge">ARCHITECTURE</span>
+        </div>
+        <div class="arch-diagram">
+            <div class="arch-layers">
+                <div class="arch-layer">
+                    <span class="layer-label">&#x1F4F1; UI层 (View)</span>
+                    <div class="arch-boxes">
+                        <div class="arch-box ui"><div><strong>VocationMastery</strong></div><small>主入口界面</small></div>
+                        <div class="arch-box ui"><div><strong>VocationMain</strong></div><small>身份列表主界面</small></div>
+                        <div class="arch-box ui"><div><strong>VocationItem</strong></div><small>身份卡片子项</small></div>
+                        <div class="arch-box ui"><div><strong>JobInfo</strong></div><small>身份详情弹窗</small></div>
+                        <div class="arch-box ui"><div><strong>JobInfo_SkillItem</strong></div><small>技巧子项</small></div>
+                        <div class="arch-box ui"><div><strong>JobInfo_ProgressItem</strong></div><small>专精奖励进度子项</small></div>
+                    </div>
+                </div>
+                <div class="arch-arrow">&#x2B07;&#xFE0F; 数据绑定 &amp; 事件通信 &#x2B07;&#xFE0F;</div>
+                <div class="arch-layer">
+                    <span class="layer-label">&#x1F4BE; Model层 (数据)</span>
+                    <div class="arch-boxes">
+                        <div class="arch-box model"><div><strong>PreparationsModel</strong></div><small>核心数据模型</small></div>
+                        <div class="arch-box config"><div><strong>NR3E3VocationTable</strong></div><small>身份配置表</small></div>
+                        <div class="arch-box config"><div><strong>WolfKillRoadToMasterTable</strong></div><small>专精奖励配置表</small></div>
+                        <div class="arch-box model"><div><strong>BagModel / RootAttrModel</strong></div><small>背包/道具模型</small></div>
+                        <div class="arch-box model"><div><strong>RankingModel</strong></div><small>排行榜模型</small></div>
+                        <div class="arch-box model"><div><strong>NR3E3TreasureSystemModel</strong></div><small>珍宝共享模型</small></div>
+                    </div>
+                </div>
+                <div class="arch-arrow">&#x2B07;&#xFE0F; 网络协议 &#x2B07;&#xFE0F;</div>
+                <div class="arch-layer">
+                    <span class="layer-label">&#x1F310; 服务端通信</span>
+                    <div class="arch-boxes">
+                        <div class="arch-box server"><div><strong>LetsGoGetWolfKillRoleInfo</strong></div><small>获取身份战绩</small></div>
+                        <div class="arch-box server"><div><strong>WolfKillRoleInfoRewardRedDot</strong></div><small>获取奖励红点</small></div>
+                        <div class="arch-box server"><div><strong>WolfKillRoleInfoReward</strong></div><small>获取奖励领取状态</small></div>
+                        <div class="arch-box server"><div><strong>WolfKillRoleInfoRewardRecv</strong></div><small>领取奖励</small></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="section" id="files">
+        <div class="section-title">
+            <span class="icon">&#x1F4C1;</span>
+            <h2>文件职责分析</h2>
+            <span class="badge">FILES</span>
+        </div>
+        <table class="styled-table">
+            <thead><tr><th style="width:28%">文件名</th><th style="width:15%">职责</th><th>核心功能</th></tr></thead>
+            <tbody>
+                <tr><td><code>UI_Preparations_NR3E3_VocationMastery.lua</code></td><td><strong>主入口容器</strong></td><td>侧边Tab管理（身份精通 / 大师之路），子页面加载/切换，帮助Tips弹窗</td></tr>
+                <tr><td><code>UI_Preparations_NR3E3_VocationMain.lua</code></td><td><strong>身份列表主界面</strong></td><td>身份数据排序/过滤/分页、Grid布局创建、Tab分类（全部/平民/狼人/中立）、红点管理、共享/试用/到期逻辑</td></tr>
+                <tr><td><code>UI_Preparations_NR3E3_VocationItem.lua</code></td><td><strong>身份卡片子项</strong></td><td>单个身份的外观渲染（阵营背景/装饰等级/动画/新标记）、红点处理、到期倒计时</td></tr>
+                <tr><td><code>UI_Preparations_NR3E3_JobInfo.lua</code></td><td><strong>身份详情弹窗</strong></td><td>三页签切换（基本信息/技巧进阶/专精奖励）、战绩展示、共享/试用/联名身份特殊样式、排行、实战练习、跳转解锁</td></tr>
+                <tr><td><code>UI_Preparations_NR3E3_JobInfo_SkillItem.lua</code></td><td><strong>技巧子项</strong></td><td>展示身份技巧 icon 和描述文本</td></tr>
+                <tr><td><code>UI_Preparations_NR3E3_JobInfo_ProgressItem.lua</code></td><td><strong>专精奖励进度子项</strong></td><td>进度条渲染（首/中/末段不同样式）、奖励状态（未解锁/可领取/已领取）、领取请求与回调</td></tr>
+                <tr><td><code>PreparationsModel.lua</code></td><td><strong>核心数据模型</strong></td><td>服务端数据请求/缓存、身份解锁/排序逻辑、红点计算、"新"标记本地缓存管理、过滤状态</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="section" id="features">
+        <div class="section-title">
+            <span class="icon">&#x26A1;</span>
+            <h2>核心功能点总结</h2>
+            <span class="badge">FEATURES</span>
+        </div>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-num">1</div>
+                <h4>身份展示与分类</h4>
+                <ul>
+                    <li>按阵营分类：<strong>全部 / 平民(Prey) / 狼人(Hunter) / 中立(Neutral)</strong></li>
+                    <li>支持<strong>过滤器</strong>（<code>VocationFilter</code>），可筛选出符合条件的身份</li>
+                    <li>身份卡片显示：阵营颜色背景、装饰等级（1~7级不同外观）、"新"标签、红点</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <div class="feature-num">2</div>
+                <h4>身份解锁体系</h4>
+                <ul>
+                    <li><strong>默认解锁</strong>：配置表 <code>Preparations_DefaultUnLock == 1</code></li>
+                    <li><strong>分数解锁</strong>：<code>Score &gt; 0</code> 表示有战绩即解锁</li>
+                    <li><strong>道具解锁</strong>：通过背包中的 <code>Identity_ItemUnlock</code> 道具判断</li>
+                    <li><strong>共享身份</strong>：来自珍宝系统，有到期时间</li>
+                    <li><strong>试用身份</strong>：有过期时间但非共享来源的道具</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <div class="feature-num">3</div>
+                <h4>身份详情（三页签）</h4>
+                <ul>
+                    <li><strong>基本信息</strong>：身份名称、阵营、技能描述、战绩（总场次/胜场/MVP）、分数等级、专精排名</li>
+                    <li><strong>技巧进阶</strong>：通过配置表加载身份对应的技巧列表</li>
+                    <li><strong>专精奖励</strong>：分数进度条 + 奖励道具展示，支持领取操作</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <div class="feature-num">4</div>
+                <h4>专精奖励系统</h4>
+                <ul>
+                    <li>服务端协议：<code>C2S_Msg</code> 获取状态，<code>RewardRecv</code> 领取</li>
+                    <li>三种状态：<strong>-1</strong>(未解锁) / <strong>0</strong>(可领取) / <strong>1</strong>(已领取)</li>
+                    <li>进度条分段渲染（首段/中段/末段布局不同，带当前分数指示器）</li>
+                    <li>特殊道具处理：身份装饰道具领取后弹奖励弹窗</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <div class="feature-num">5</div>
+                <h4>红点系统</h4>
+                <ul>
+                    <li><strong>分层红点</strong>：VocationMastery侧边栏 &#8594; Tab分类 &#8594; 单个身份卡片</li>
+                    <li><strong>"新"标记</strong>：通过本地缓存（<code>ClientCacheData</code>）记录已查看身份ID</li>
+                    <li><strong>奖励红点</strong>：服务端返回 <code>red_dot</code> 字段，领取后减1</li>
+                    <li><strong>红点样式</strong>：两种（<code>Dot</code> 圆点 / <code>NewMatchType</code> "新"字样）</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <div class="feature-num">6</div>
+                <h4>排序策略</h4>
+                <div class="code-block">
+<span class="comment">-- 优先级排序：</span>
+<span class="comment">-- 1. 已有分数解锁 (priority=1)</span>
+<span class="comment">-- 2. 道具解锁/共享/试用 (priority=2)</span>
+<span class="comment">-- 3. 未解锁 (priority=3)</span>
+<span class="comment">--</span>
+<span class="comment">-- 同优先级 &#8594; 分数降序 &#8594; 配置排序值升序</span>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-num">7</div>
+                <h4>左右切换身份</h4>
+                <ul>
+                    <li>在详情弹窗中支持<strong>左右按钮</strong>切换前后身份</li>
+                    <li>通过事件 <code>ON_NR3E3_VOCATIONMAIN_CHANGEINFO</code> 通知主列表</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <div class="feature-num">8</div>
+                <h4>实战练习 &amp; 设备适配</h4>
+                <ul>
+                    <li>从详情页直接发起<strong>练习匹配</strong></li>
+                    <li>折叠屏/特定机型：<code>GRL-AL10</code>、<code>2308CPXD0C</code> 等调整缩放比例（0.86x）</li>
+                    <li>胶囊区域适配：微信小游戏环境下调整Tab位置偏移</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="section" id="techstack">
+        <div class="section-title">
+            <span class="icon">&#x1F6E0;&#xFE0F;</span>
+            <h2>技术栈分析</h2>
+            <span class="badge">TECH STACK</span>
+        </div>
+        <div class="card">
+            <h3>所用技术</h3>
+            <div class="tech-tags">
+                <span class="tech-tag lua">&#x1F319; Lua &#8212; 业务逻辑语言</span>
+                <span class="tech-tag ue4">&#x1F3AE; UE4 UMG &#8212; UI框架</span>
+                <span class="tech-tag moe">&#x1F527; _MOE框架 &#8212; 自研MVC框架</span>
+                <span class="tech-tag proto">&#x1F4E1; C2S/S2C协议 &#8212; 网络通信</span>
+                <span class="tech-tag cache">&#x1F4BF; 本地缓存 &#8212; 红点持久化</span>
+                <span class="tech-tag umg">&#x1F3AC; UMG动画 &#8212; 过渡动画</span>
+            </div>
+        </div>
+        <table class="styled-table" style="margin-top: 20px;">
+            <thead><tr><th style="width:22%">技术</th><th>用途说明</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Lua</strong></td><td>业务逻辑开发语言，通过 UnLua 插件与 UE4 引擎交互</td></tr>
+                <tr><td><strong>UE4 UMG</strong></td><td>UI框架，使用 Widget、WidgetSwitcher、ListView、GridPanel、ProgressBar 等控件</td></tr>
+                <tr><td><strong>_MOE框架</strong></td><td>自研MVC框架，提供 <code>BaseViewClass</code>、<code>BaseModel</code>、EventManager、UIManager、TimerManager 等基础能力</td></tr>
+                <tr><td><strong>C2S/S2C协议</strong></td><td>Protobuf风格的网络协议通信，用于获取战绩、奖励状态、领取奖励等</td></tr>
+                <tr><td><strong>本地缓存</strong></td><td><code>PlayerModel:SetClientCacheData</code> / <code>GetClientCacheData</code> 用于红点"新"标记持久化</td></tr>
+                <tr><td><strong>UMG动画</strong></td><td>界面开关、切换、Tips弹出等过渡动画，使用 <code>AnimationPlayForward</code> 驱动</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="section" id="patterns">
+        <div class="section-title">
+            <span class="icon">&#x1F9E9;</span>
+            <h2>设计模式</h2>
+            <span class="badge">PATTERNS</span>
+        </div>
+        <div class="pattern-grid">
+            <div class="pattern-card"><div class="pattern-icon">&#x1F3DB;&#xFE0F;</div><h4>MVC分层</h4><p>Model（PreparationsModel）持有数据和服务端通信，View层只做展示和交互</p></div>
+            <div class="pattern-card"><div class="pattern-icon">&#x1F4E1;</div><h4>事件驱动</h4><p>大量使用 <code>EventManager</code> 进行跨模块通信（红点刷新、身份切换、道具变化等）</p></div>
+            <div class="pattern-card"><div class="pattern-icon">&#x1F4CB;</div><h4>配置表驱动</h4><p>身份、技巧、奖励等数据全部由配置表定义，UI只做动态渲染</p></div>
+            <div class="pattern-card"><div class="pattern-icon">&#x1F9F1;</div><h4>组合式UI</h4><p>主界面通过 <code>AddWidget</code> / <code>AddView</code> 动态添加子组件，灵活组合</p></div>
+        </div>
+    </div>
+    <div class="section" id="proscons">
+        <div class="section-title">
+            <span class="icon">&#x2696;&#xFE0F;</span>
+            <h2>优缺点分析</h2>
+            <span class="badge">EVALUATION</span>
+        </div>
+        <div class="pros-cons">
+            <div class="pros-card">
+                <h3>&#x2705; 优点</h3>
+                <ul>
+                    <li><strong>分层清晰</strong>：Model/View 职责明确，数据层与展示层解耦</li>
+                    <li><strong>事件驱动解耦</strong>：各子模块通过事件通信，降低了直接依赖</li>
+                    <li><strong>批量创建优化</strong>：<code>CreateVocationItem</code> 中采用分批帧创建（<code>AddFrame</code>），避免一帧创建大量Widget导致卡顿</li>
+                    <li><strong>布局预计算</strong>：<code>PreCalculateLayout</code> 和 <code>ApplyGridLayout</code> 分离布局参数计算和应用，职责清晰</li>
+                    <li><strong>排序策略封装</strong>：排序逻辑拆分为 <code>GetPriority</code> + <code>GetSortFunction</code>，可读性好</li>
+                    <li><strong>设备兼容处理</strong>：针对折叠屏和特殊机型有专门的缩放和偏移适配</li>
+                    <li><strong>红点系统完备</strong>：多层级红点（页签&#8594;分类&#8594;单项），且支持本地缓存持久化</li>
+                </ul>
+            </div>
+            <div class="cons-card">
+                <h3>&#x26A0;&#xFE0F; 缺点</h3>
+                <ul>
+                    <li><strong>PreparationsModel 过于庞大</strong>（3565行）：承载了大厅、匹配、活动、回归等多种职责，违反了单一职责原则</li>
+                    <li><strong>硬编码较多</strong>：设备名称、特殊职业ID（<code>45/46/47</code>）、布局像素值（355.0, 236.0等）散布在代码中</li>
+                    <li><strong>进度条逻辑复杂度高</strong>：<code>ProgressItem:InitUI</code> 中的分段计算逻辑嵌套较深，缺少注释说明公式含义</li>
+                    <li><strong>红点逻辑冗余</strong>：红点的"新"标记逻辑在多个文件中都有部分实现，逻辑分散且有重复</li>
+                    <li><strong>内存清理风格不统一</strong>：<code>OnClose</code> 中有的手动置nil，有的依赖框架清理，缺乏统一规范</li>
+                    <li><strong>Magic Number</strong>：如 <code>278.0 * progress + 78</code> 这类数字缺少常量定义</li>
+                    <li><strong>注释不足</strong>：核心算法（排序优先级、进度条分段公式）和业务规则缺少文档性注释</li>
+                    <li><strong>goto continue 用法</strong>：在某些循环中使用降低了可读性</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="section" id="dataflow">
+        <div class="section-title">
+            <span class="icon">&#x1F504;</span>
+            <h2>数据流程</h2>
+            <span class="badge">DATA FLOW</span>
+        </div>
+        <div class="flow-container">
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <div class="flow-dot user">1</div>
+                    <div class="flow-content">
+                        <div class="flow-title">玩家打开专精界面</div>
+                        <div class="flow-desc">打开 VocationMastery 主入口界面</div>
+                        <span class="flow-tag">&#x1F464; User &#8594; UI</span>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-dot client">2</div>
+                    <div class="flow-content">
+                        <div class="flow-title">请求红点数据</div>
+                        <div class="flow-desc">Mastery &#8594; Model: <code>ReqWolfKillRoleInfoReward()</code><br>Model &#8594; Server: <code>WolfKillRoleInfoRewardRedDot_C2S</code></div>
+                        <span class="flow-tag">&#x1F4E1; Client &#8594; Server</span>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-dot server">3</div>
+                    <div class="flow-content">
+                        <div class="flow-title">服务端返回红点数据</div>
+                        <div class="flow-desc">Server &#8594; Model: 返回各身份红点数据</div>
+                        <span class="flow-tag">&#x1F4E1; Server &#8594; Client</span>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-dot client">4</div>
+                    <div class="flow-content">
+                        <div class="flow-title">加载身份列表页面</div>
+                        <div class="flow-desc">Mastery &#8594; VocationMain 子页面<br>Main &#8594; Model: <code>GetVocationInVerData()</code> &amp; <code>RequestVocationMainInfo()</code></div>
+                        <span class="flow-tag">&#x1F4F1; UI 组件创建</span>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-dot model">5</div>
+                    <div class="flow-content">
+                        <div class="flow-title">获取身份战绩数据</div>
+                        <div class="flow-desc">Model &#8594; Server: <code>LetsGoGetWolfKillRoleInfo_C2S</code><br>Server &#8594; Model: 返回各身份战绩（分数、胜场、MVP等）</div>
+                        <span class="flow-tag">&#x1F4E1; Data Sync</span>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-dot client">6</div>
+                    <div class="flow-content">
+                        <div class="flow-title">排序 &amp; 创建卡片</div>
+                        <div class="flow-desc">Main: <code>SortVocation()</code> &#8594; 按优先级/分数/配置值排序<br>Main: <code>CreateVocationItem()</code> &#8594; 批量分帧创建身份卡片</div>
+                        <span class="flow-tag">&#x1F522; 排序 &#8594; &#x1F9F1; 渲染</span>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-dot user">7</div>
+                    <div class="flow-content">
+                        <div class="flow-title">玩家点击身份卡片</div>
+                        <div class="flow-desc">VocationItem &#8594; <code>DispatchEvent(ON_NR3E3_VOCATIONMAIN_OPENITEM, vocationId)</code><br>Main &#8594; 打开 JobInfo 详情弹窗</div>
+                        <span class="flow-tag">&#x1F464; User &#8594; UI</span>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-dot client">8</div>
+                    <div class="flow-content">
+                        <div class="flow-title">加载身份详情</div>
+                        <div class="flow-desc">JobInfo &#8594; Server: <code>WolfKillRoleInfoReward_C2S</code> 获取奖励领取状态<br>展示三页签内容（基本信息/技巧进阶/专精奖励）</div>
+                        <span class="flow-tag">&#x1F4CB; Detail View</span>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-dot user">9</div>
+                    <div class="flow-content">
+                        <div class="flow-title">玩家领取奖励</div>
+                        <div class="flow-desc">ProgressItem &#8594; Server: <code>WolfKillRoleInfoRewardRecv_C2S</code><br>领取成功后更新红点、刷新UI、弹出奖励弹窗（身份装饰道具）</div>
+                        <span class="flow-tag">&#x1F381; Reward Claimed</span>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-dot model">10</div>
+                    <div class="flow-content">
+                        <div class="flow-title">红点数据更新 &amp; 广播</div>
+                        <div class="flow-desc">Model: <code>UpdateWolfKillRoleInfoRewardRedDot()</code><br>EventManager &#8594; 刷新 Tab红点 / 卡片红点 / 侧边栏红点</div>
+                        <span class="flow-tag">&#x1F534; RedDot Refresh</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="section" id="suggestions">
+        <div class="section-title">
+            <span class="icon">&#x1F4A1;</span>
+            <h2>改进建议</h2>
+            <span class="badge">SUGGESTIONS</span>
+        </div>
+        <div class="suggestion-list">
+            <div class="suggestion-item">
+                <div class="sug-num">1</div>
+                <div class="sug-text"><strong>拆分 PreparationsModel</strong> &#8212; 将狼人专精相关逻辑独立为 <code>VocationMasteryModel</code>，降低单文件复杂度（当前3565行），提升可维护性</div>
+            </div>
+            <div class="suggestion-item">
+                <div class="sug-num">2</div>
+                <div class="sug-text"><strong>提取布局/进度条计算常量</strong> &#8212; 将 <code>355.0</code>、<code>236.0</code>、<code>278.0</code>、<code>0.29</code>、<code>0.35</code> 等 Magic Number 定义为命名常量，增强代码可读性</div>
+            </div>
+            <div class="suggestion-item">
+                <div class="sug-num">3</div>
+                <div class="sug-text"><strong>统一红点管理逻辑</strong> &#8212; 将分散在 <code>VocationItem</code>、<code>VocationMain</code>、<code>PreparationsModel</code> 中的红点逻辑集中到 Model 层处理，消除冗余</div>
+            </div>
+            <div class="suggestion-item">
+                <div class="sug-num">4</div>
+                <div class="sug-text"><strong>增加核心算法的文档注释</strong> &#8212; 尤其是进度条分段计算公式（首段/次段/末段的 minPx、progress 计算逻辑），便于后续维护理解</div>
+            </div>
+            <div class="suggestion-item">
+                <div class="sug-num">5</div>
+                <div class="sug-text"><strong>消除硬编码</strong> &#8212; 将特殊职业ID（<code>45/46/47</code>）、设备型号列表等配置化管理，避免散布在业务逻辑中</div>
+            </div>
+            <div class="suggestion-item">
+                <div class="sug-num">6</div>
+                <div class="sug-text"><strong>统一内存清理规范</strong> &#8212; 在 <code>OnClose</code> 中建立统一的资源释放模式，避免遗漏导致内存泄漏</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="footer">
+    <p>&#x1F43A; 狼人专精系统分析文档 &nbsp;|&nbsp; 基于 Lua + UE4/UMG + _MOE 框架</p>
+    <p style="margin-top: 8px; font-size: 0.85em; color: #b2bec3;">本文档由代码分析自动生成</p>
+</div>
+</body>
+</html>
