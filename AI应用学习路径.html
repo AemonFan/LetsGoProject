@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI时代游戏开发者学习路径 - 聚焦应用实践</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        h2 {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin: 40px 0 20px 0;
+            font-size: 1.8em;
+        }
+
+        h3 {
+            color: #764ba2;
+            margin: 30px 0 15px 0;
+            font-size: 1.4em;
+        }
+
+        h4 {
+            color: #555;
+            margin: 20px 0 10px 0;
+            font-size: 1.2em;
+        }
+
+        p {
+            margin: 15px 0;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .highlight-box {
+            background: #f0f4ff;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        .flow-diagram {
+            background: #f8f9fa;
+            border: 2px dashed #667eea;
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .flow-step {
+            background: white;
+            border: 2px solid #667eea;
+            padding: 15px 30px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 10px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .arrow {
+            font-size: 24px;
+            color: #667eea;
+            margin: 0 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .time-badge {
+            display: inline-block;
+            background: #764ba2;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+
+        .module-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .module-header {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: -25px -25px 20px -25px;
+        }
+
+        .goals-list li::before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .scenario-list li::before {
+            content: "✅ ";
+        }
+
+        .qa-item {
+            background: #f8f9fa;
+            border-left: 4px solid #764ba2;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .question {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .answer {
+            color: #555;
+        }
+
+        .footer {
+            background: #2d2d2d;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 AI时代游戏开发者学习路径</h1>
+            <p class="subtitle">聚焦应用实践 | 提升开发效率 | 保持技术竞争力</p>
+        </div>
+
+        <div class="content">
+            <div class="highlight-box">
+                <p><strong>📋 学习对象：</strong>为拥有7年游戏开发经验(2年UE4)的工程师设计的AI应用能力提升计划</p>
+                <p><strong>⏰ 时间投入：</strong>每周2-3天,每次1-3小时</p>
+                <p><strong>🎯 学习周期：</strong>灵活调整,无硬性限制</p>
+            </div>
+
+            <h2>📋 学习目标</h2>
+
+            <h3>核心目标</h3>
+            <ul class="goals-list">
+                <li><strong>掌握AI工具辅助UE4开发</strong> - 提升日常开发效率</li>
+                <li><strong>学习AI在游戏系统开发中的实际应用</strong> - 技术文档、系统设计、性能优化</li>
+                <li><strong>建立数据驱动的开发方法</strong> - 用AI分析数据,优化游戏体验</li>
+                <li><strong>提升代码质量和工程化水平</strong> - 用AI重构代码,消除技术债</li>
+            </ul>
+
+            <h3>应用场景聚焦</h3>
+            <ul class="scenario-list">
+                <li>游戏局内外系统逻辑开发</li>
+                <li>商业化系统开发</li>
+                <li>系统框架规划设计</li>
+                <li>性能提升(渲染、网络、内存)</li>
+                <li>数据驱动开发</li>
+                <li>渲染优化</li>
+                <li>资源管理与优化</li>
+            </ul>
+
+            <h2>🎯 学习路径概览</h2>
+
+            <div class="flow-diagram">
+                <div class="flow-step">模块1: AI编程助手应用</div>
+                <span class="arrow">↓</span>
+                <div class="flow-step">模块2: AI在系统开发中的应用</div>
+                <span class="arrow">↓</span>
+                <div class="flow-step">模块3: AI在性能优化中的应用</div>
+                <span class="arrow">↓</span>
+                <div class="flow-step">模块4: AI在数据驱动中的应用</div>
+                <span class="arrow">↓</span>
+                <div class="flow-step">模块5: AI在资源管理中的应用</div>
+            </div>
+
+            <p class="time-badge">总时长: 约12-17周,可根据实际情况灵活调整</p>
+
+            <h2>📚 模块1: AI编程助手应用 (2-3周)</h2>
+
+            <div class="module-card">
+                <h3>学习目标</h3>
+                <ul class="goals-list">
+                    <li>掌握AI编程助手(ChatGPT、Claude、GitHub Copilot等)的使用技巧</li>
+                    <li>用AI重构现有代码,提升代码质量</li>
+                    <li>建立AI辅助编程的标准工作流程</li>
+                </ul>
+
+                <h4>第1周: AI编程助手基础</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>了解主流AI编程助手: ChatGPT、Claude、GitHub Copilot</li>
+                    <li>学习Prompt编写技巧: 如何向AI提出清晰的问题</li>
+                    <li>掌握AI辅助代码编写: 代码生成、代码解释、代码优化</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>注册并使用ChatGPT或Claude</li>
+                    <li>用AI解释一个复杂的系统代码(如PreparationsModel)</li>
+                    <li>用AI生成一段简单的UE4蓝图或C++代码</li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次1-2小时</p>
+
+                <h4>第2周: AI辅助代码重构</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>用AI识别代码中的问题和改进点</li>
+                    <li>用AI设计重构方案</li>
+                    <li>用AI生成重构后的代码</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>将PreparationsModel的代码发送给AI,要求:
+                        <ul>
+                            <li>分析代码结构和问题</li>
+                            <li>提出重构建议</li>
+                            <li>生成拆分后的子Model代码</li>
+                        </ul>
+                    </li>
+                    <li>验证AI生成代码的正确性</li>
+                    <li>总结AI在代码重构中的优缺点</li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次2-3小时</p>
+
+                <h4>第3周: 建立AI编程工作流</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>设计AI辅助开发的标准流程</li>
+                    <li>制定Prompt模板库</li>
+                    <li>建立代码审查流程(AI+人工)</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>设计你的AI编程工作流文档:
+                        <ul>
+                            <li>什么时候用AI辅助</li>
+                            <li>如何验证AI生成的代码</li>
+                            <li>如何避免AI的常见错误</li>
+                        </ul>
+                    </li>
+                    <li>创建常用Prompt模板:
+                        <ul>
+                            <li>代码解释Prompt</li>
+                            <li>代码生成Prompt</li>
+                            <li>Bug修复Prompt</li>
+                            <li>代码优化Prompt</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次1-2小时</p>
+            </div>
+
+            <div class="success-box">
+                <h3>交付物</h3>
+                <ul class="goals-list">
+                    <li>重构后的PreparationsModel代码</li>
+                    <li>AI编程工作流文档</li>
+                    <li>Prompt模板库</li>
+                </ul>
+            </div>
+
+            <h2>📚 模块2: AI在系统开发中的应用 (3-4周)</h2>
+
+            <div class="module-card">
+                <h3>学习目标</h3>
+                <ul class="goals-list">
+                    <li>用AI生成技术文档和API文档</li>
+                    <li>用AI设计系统架构和框架</li>
+                    <li>用AI辅助编写单元测试</li>
+                </ul>
+
+                <h4>第1周: AI辅助技术文档生成</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>用AI从代码中提取信息生成文档</li>
+                    <li>用AI生成API文档和架构图</li>
+                    <li>用AI维护技术文档的更新</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>选择一个系统(如狼人专精系统),用AI生成:
+                        <ul>
+                            <li>系统架构文档</li>
+                            <li>API文档</li>
+                            <li>数据流程图</li>
+                        </ul>
+                    </li>
+                    <li>验证文档的准确性和完整性</li>
+                    <li>建立文档自动更新流程</li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次1-2小时</p>
+
+                <h4>第2周: AI辅助系统设计</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>用AI分析需求,生成系统设计方案</li>
+                    <li>用AI设计MVC框架的扩展</li>
+                    <li>用AI优化现有系统架构</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>用AI设计一个新的系统(如成就系统):
+                        <ul>
+                            <li>分析需求</li>
+                            <li>设计系统架构</li>
+                            <li>设计数据结构</li>
+                            <li>生成核心代码框架</li>
+                        </ul>
+                    </li>
+                    <li>对比AI设计方案和传统设计方案的优劣</li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次2-3小时</p>
+
+                <h4>第3周: AI辅助单元测试</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>用AI生成单元测试用例</li>
+                    <li>用AI分析测试覆盖率</li>
+                    <li>用AI生成边界测试和异常测试</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>为PreparationsModel生成单元测试:
+                        <ul>
+                            <li>正常功能测试</li>
+                            <li>边界条件测试</li>
+                            <li>异常情况测试</li>
+                        </ul>
+                    </li>
+                    <li>运行测试,验证测试覆盖率</li>
+                    <li>用AI优化测试用例</li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次1-2小时</p>
+
+                <h4>第4周: 综合实践 - 系统开发工作流</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>整合AI辅助的完整系统开发流程</li>
+                    <li>建立AI+人工协作的开发模式</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>开发一个小功能(如简单的背包系统):
+                        <ul>
+                            <li>用AI设计系统</li>
+                            <li>用AI生成代码框架</li>
+                            <li>用AI生成文档</li>
+                            <li>用AI生成测试</li>
+                        </ul>
+                    </li>
+                    <li>总结AI在系统开发中的最佳实践</li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次2-3小时</p>
+            </div>
+
+            <div class="success-box">
+                <h3>交付物</h3>
+                <ul class="goals-list">
+                    <li>狼人专精系统技术文档</li>
+                    <li>成就系统设计文档和代码框架</li>
+                    <li>PreparationsModel单元测试代码</li>
+                    <li>AI辅助系统开发工作流</li>
+                </ul>
+            </div>
+
+            <h2>📚 模块3: AI在性能优化中的应用 (3-4周)</h2>
+
+            <div class="module-card">
+                <h3>学习目标</h3>
+                <ul class="goals-list">
+                    <li>用AI分析Unreal Insights性能数据</li>
+                    <li>用AI识别性能瓶颈和优化点</li>
+                    <li>用AI生成优化方案和代码</li>
+                </ul>
+
+                <h4>第1周: AI辅助性能分析</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>用AI理解Unreal Insights的输出数据</li>
+                    <li>用AI分析CPU、GPU、内存的性能数据</li>
+                    <li>用AI识别性能热点和瓶颈</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>运行你的项目,收集Unreal Insights数据</li>
+                    <li>将性能数据发送给AI,要求:
+                        <ul>
+                            <li>分析性能瓶颈</li>
+                            <li>识别优化点</li>
+                            <li>给出优化优先级建议</li>
+                        </ul>
+                    </li>
+                    <li>对比AI分析结果和人工分析结果</li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次1-2小时</p>
+
+                <h4>第2周: AI辅助渲染优化</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>用AI优化Draw Call</li>
+                    <li>用AI设计LOD和Instancing策略</li>
+                    <li>用AI优化着色器和材质</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>用AI分析项目的渲染性能:
+                        <ul>
+                            <li>Draw Call数量分析</li>
+                            <li>材质复杂度分析</li>
+                            <li>光照性能分析</li>
+                        </ul>
+                    </li>
+                    <li>用AI生成优化方案:
+                        <ul>
+                            <li>材质合并方案</li>
+                            <li>LOD设计</li>
+                            <li>Instancing应用</li>
+                        </ul>
+                    </li>
+                    <li>实施部分优化,验证效果</li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次2-3小时</p>
+
+                <h4>第3周: AI辅助网络和内存优化</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>用AI分析网络同步效率</li>
+                    <li>用AI设计RPC优化方案</li>
+                    <li>用AI分析内存使用和内存泄漏</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>用AI分析网络性能:
+                        <ul>
+                            <li>Replication效率分析</li>
+                            <li>RPC调用频率分析</li>
+                            <li>网络带宽使用分析</li>
+                        </ul>
+                    </li>
+                    <li>用AI生成优化方案</li>
+                    <li>用AI分析内存使用:
+                        <ul>
+                            <li>内存热点分析</li>
+                            <li>智能指针使用分析</li>
+                            <li>内存泄漏检测</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次2-3小时</p>
+
+                <h4>第4周: 综合优化实践</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>整合AI辅助的完整性能优化流程</li>
+                    <li>建立性能监控和持续优化机制</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>选择一个性能问题,用AI辅助完整优化流程:
+                        <ul>
+                            <li>问题定位</li>
+                            <li>方案设计</li>
+                            <li>代码实施</li>
+                            <li>效果验证</li>
+                        </ul>
+                    </li>
+                    <li>建立性能监控文档:
+                        <ul>
+                            <li>关键性能指标</li>
+                            <li>性能基准</li>
+                            <li>优化检查清单</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次2-3小时</p>
+            </div>
+
+            <div class="success-box">
+                <h3>交付物</h3>
+                <ul class="goals-list">
+                    <li>项目性能分析报告</li>
+                    <li>渲染优化方案和实施结果</li>
+                    <li>网络/内存优化方案</li>
+                    <li>性能监控文档和检查清单</li>
+                </ul>
+            </div>
+
+            <h2>📚 模块4: AI在数据驱动中的应用 (2-3周)</h2>
+
+            <div class="module-card">
+                <h3>学习目标</h3>
+                <ul class="goals-list">
+                    <li>用AI分析游戏数据,发现优化点</li>
+                    <li>用AI设计数据配置系统</li>
+                    <li>建立AI辅助的数据驱动开发流程</li>
+                </ul>
+
+                <h4>第1周: AI辅助数据分析</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>用AI分析玩家行为数据</li>
+                    <li>用AI发现游戏平衡性问题</li>
+                    <li>用AI分析商业化数据</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>准备游戏数据(可以是模拟数据或历史数据):
+                        <ul>
+                            <li>玩家留存数据</li>
+                            <li>玩家付费数据</li>
+                            <li>游戏平衡性数据</li>
+                        </ul>
+                    </li>
+                    <li>用AI分析数据:
+                        <ul>
+                            <li>找出关键影响因素</li>
+                            <li>发现异常模式</li>
+                            <li>给出优化建议</li>
+                        </ul>
+                    </li>
+                    <li>验证AI分析结果的合理性</li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次1-2小时</p>
+
+                <h4>第2周: AI辅助数据系统设计</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>用AI设计数据配置系统</li>
+                    <li>用AI设计数据验证机制</li>
+                    <li>用AI设计数据热更新方案</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>用AI设计一个数据配置系统:
+                        <ul>
+                            <li>配置数据结构设计</li>
+                            <li>配置文件格式(JSON/XML/二进制)</li>
+                            <li>配置加载和缓存机制</li>
+                            <li>配置验证和错误处理</li>
+                        </ul>
+                    </li>
+                    <li>生成核心代码框架</li>
+                    <li>设计数据热更新流程</li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次2-3小时</p>
+
+                <h4>第3周: 建立数据驱动开发流程</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>整合AI辅助的数据驱动开发流程</li>
+                    <li>建立数据驱动的决策机制</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>设计数据驱动开发流程文档:
+                        <ul>
+                            <li>数据收集</li>
+                            <li>数据分析</li>
+                            <li>数据驱动决策</li>
+                            <li>配置更新</li>
+                            <li>效果验证</li>
+                        </ul>
+                    </li>
+                    <li>建立AI辅助的数据分析工具链</li>
+                    <li>总结数据驱动的最佳实践</li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次1-2小时</p>
+            </div>
+
+            <div class="success-box">
+                <h3>交付物</h3>
+                <ul class="goals-list">
+                    <li>游戏数据分析报告</li>
+                    <li>数据配置系统设计和代码框架</li>
+                    <li>数据驱动开发流程文档</li>
+                </ul>
+            </div>
+
+            <h2>📚 模块5: AI在资源管理中的应用 (2-3周)</h2>
+
+            <div class="module-card">
+                <h3>学习目标</h3>
+                <ul class="goals-list">
+                    <li>用AI分析项目资源使用情况</li>
+                    <li>用AI优化资源加载策略</li>
+                    <li>用AI建立资源管理最佳实践</li>
+                    <li>降低内存占用和包体大小</li>
+                </ul>
+
+                <h4>第1周: AI辅助资源分析</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>用AI分析资源使用情况(材质、网格、贴图、音频等)</li>
+                    <li>用AI识别冗余资源和未使用的资源</li>
+                    <li>用AI分析资源依赖关系</li>
+                    <li>用AI评估资源质量和性能影响</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>收集项目资源数据:
+                        <ul>
+                            <li>使用Unreal资源管理工具导出资源列表</li>
+                            <li>统计各类资源的数量、大小、使用情况</li>
+                        </ul>
+                    </li>
+                    <li>用AI分析资源数据:
+                        <ul>
+                            <li>识别大资源文件(&gt;10MB的贴图/网格等)</li>
+                            <li>发现重复或相似资源</li>
+                            <li>分析资源使用频率和热度</li>
+                            <li>识别未引用的资源</li>
+                        </ul>
+                    </li>
+                    <li>生成资源分析报告:
+                        <ul>
+                            <li>资源占用TOP榜</li>
+                            <li>冗余资源列表</li>
+                            <li>资源优化建议(按优先级排序)</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次1-2小时</p>
+
+                <h4>第2周: AI辅助资源优化</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>用AI设计资源压缩方案</li>
+                    <li>用AI优化贴图格式和分辨率</li>
+                    <li>用AI设计资源流式加载策略</li>
+                    <li>用AI优化材质和网格</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>用AI制定资源优化方案:
+                        <ul>
+                            <li>贴图压缩方案(DXT/ASTC/BC7等格式选择)</li>
+                            <li>LOD资源设计</li>
+                            <li>资源分组和打包策略</li>
+                            <li>动态加载/卸载策略</li>
+                        </ul>
+                    </li>
+                    <li>用AI生成资源优化脚本/工具:
+                        <ul>
+                            <li>批量处理贴图格式转换</li>
+                            <li>自动生成LOD资源</li>
+                            <li>资源依赖分析工具</li>
+                        </ul>
+                    </li>
+                    <li>实施部分优化,验证效果:
+                        <ul>
+                            <li>选择3-5个大资源进行优化</li>
+                            <li>对比优化前后的内存占用和加载时间</li>
+                            <li>记录优化效果数据</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次2-3小时</p>
+
+                <h4>第3周: 建立资源管理规范</h4>
+                <p><strong>学习内容:</strong></p>
+                <ul>
+                    <li>整合AI辅助的资源管理流程</li>
+                    <li>建立资源命名和目录规范</li>
+                    <li>建立资源检查和审核机制</li>
+                    <li>设计资源监控和持续优化机制</li>
+                </ul>
+
+                <p><strong>实践任务:</strong></p>
+                <ol>
+                    <li>设计资源管理规范文档:
+                        <ul>
+                            <li>资源命名规范(材质、网格、贴图、动画等)</li>
+                            <li>资源目录结构规范</li>
+                            <li>资源制作规范(贴图尺寸、网格面数、格式要求)</li>
+                            <li>资源提交和审核流程</li>
+                        </ul>
+                    </li>
+                    <li>建立资源检查机制:
+                        <ul>
+                            <li>资源大小限制规则</li>
+                            <li>资源质量检查清单</li>
+                            <li>用AI辅助的自动化资源检查工具</li>
+                        </ul>
+                    </li>
+                    <li>建立资源监控文档:
+                        <ul>
+                            <li>关键资源指标(内存占用、包体大小、加载时间)</li>
+                            <li>资源基线和阈值</li>
+                            <li>资源优化检查清单</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <p class="time-badge">时间投入: 2-3天,每次1-2小时</p>
+            </div>
+
+            <div class="success-box">
+                <h3>交付物</h3>
+                <ul class="goals-list">
+                    <li>项目资源分析报告</li>
+                    <li>资源优化方案和实施结果</li>
+                    <li>资源管理规范文档</li>
+                    <li>资源监控文档和检查清单</li>
+                </ul>
+            </div>
+
+            <h2>📦 最终交付物</h2>
+
+            <p>完成五个模块后,你将获得:</p>
+
+            <h3>1. 代码改进</h3>
+            <ul class="goals-list">
+                <li>重构后的PreparationsModel代码</li>
+                <li>优化后的性能热点代码</li>
+                <li>数据配置系统代码框架</li>
+            </ul>
+
+            <h3>2. 技术文档</h3>
+            <ul class="goals-list">
+                <li>AI编程工作流文档</li>
+                <li>狼人专精系统技术文档</li>
+                <li>成就系统设计文档</li>
+                <li>性能监控文档</li>
+                <li>数据驱动开发流程文档</li>
+                <li>资源管理规范文档</li>
+            </ul>
+
+            <h3>3. 工具和模板</h3>
+            <ul class="goals-list">
+                <li>Prompt模板库</li>
+                <li>代码审查检查清单</li>
+                <li>性能优化检查清单</li>
+                <li>资源优化检查清单</li>
+            </ul>
+
+            <h3>4. 经验总结</h3>
+            <ul class="goals-list">
+                <li>AI辅助开发的最佳实践</li>
+                <li>AI工具的优缺点分析</li>
+                <li>持续学习机制</li>
+            </ul>
+
+            <h2>🔧 工具和资源</h2>
+
+            <h3>AI编程助手</h3>
+            <table>
+                <tr>
+                    <th>工具</th>
+                    <th>链接</th>
+                    <th>说明</th>
+                </tr>
+                <tr>
+                    <td>ChatGPT</td>
+                    <td><a href="https://chat.openai.com" target="_blank">https://chat.openai.com</a></td>
+                    <td>推荐: 中文支持好,对UE4/C++代码理解能力强</td>
+                </tr>
+                <tr>
+                    <td>Claude</td>
+                    <td><a href="https://claude.ai" target="_blank">https://claude.ai</a></td>
+                    <td>推荐: 上下文窗口更大,适合分析大文件</td>
+                </tr>
+                <tr>
+                    <td>GitHub Copilot</td>
+                    <td><a href="https://github.com/features/copilot" target="_blank">https://github.com/features/copilot</a></td>
+                    <td>实时代码补全,IDE集成</td>
+                </tr>
+                <tr>
+                    <td>Cursor</td>
+                    <td><a href="https://cursor.sh" target="_blank">https://cursor.sh</a></td>
+                    <td>AI原生代码编辑器</td>
+                </tr>
+            </table>
+
+            <h3>UE4/UE5工具</h3>
+            <ul>
+                <li><strong>Unreal Insights</strong>: 性能分析工具</li>
+                <li><strong>Unreal Automation System</strong>: 单元测试框架</li>
+                <li><strong>Shader Profiler</strong>: 着色器性能分析</li>
+                <li><strong>Session Frontend</strong>: 数据分析工具</li>
+                <li><strong>Unreal Stats Viewer</strong>: 实时性能监控</li>
+                <li><strong>Asset Audit Tool</strong>: 资源审计工具</li>
+                <li><strong>Referencer Viewer</strong>: 资源引用关系查看</li>
+                <li><strong>Texture Size Viewer</strong>: 贴图大小查看</li>
+                <li><strong>Mesh Size Viewer</strong>: 网格大小查看</li>
+            </ul>
+
+            <h3>学习资源</h3>
+            <ul>
+                <li>Epic Games官方文档</li>
+                <li>Unreal Engine社区</li>
+                <li>AI工具官方文档</li>
+            </ul>
+
+            <h2>📊 进度跟踪</h2>
+
+            <h3>技能评估矩阵</h3>
+            <p>每个模块完成后,评估以下技能:</p>
+
+            <table>
+                <tr>
+                    <th>技能</th>
+                    <th>级别</th>
+                    <th>说明</th>
+                </tr>
+                <tr>
+                    <td>AI编程助手使用</td>
+                    <td>入门/中级/高级</td>
+                    <td>熟练使用AI辅助编程</td>
+                </tr>
+                <tr>
+                    <td>代码重构能力</td>
+                    <td>入门/中级/高级</td>
+                    <td>用AI进行代码重构</td>
+                </tr>
+                <tr>
+                    <td>技术文档编写</td>
+                    <td>入门/中级/高级</td>
+                    <td>用AI生成技术文档</td>
+                </tr>
+                <tr>
+                    <td>系统设计能力</td>
+                    <td>入门/中级/高级</td>
+                    <td>用AI辅助系统设计</td>
+                </tr>
+                <tr>
+                    <td>性能分析能力</td>
+                    <td>入门/中级/高级</td>
+                    <td>用AI分析性能数据</td>
+                </tr>
+                <tr>
+                    <td>数据分析能力</td>
+                    <td>入门/中级/高级</td>
+                    <td>用AI分析游戏数据</td>
+                </tr>
+                <tr>
+                    <td>资源管理能力</td>
+                    <td>入门/中级/高级</td>
+                    <td>用AI分析和优化项目资源</td>
+                </tr>
+            </table>
+
+            <h3>每周回顾</h3>
+            <p>每周结束时,记录:</p>
+            <ol>
+                <li>本周完成的学习内容</li>
+                <li>实践任务的成果</li>
+                <li>遇到的问题和解决方案</li>
+                <li>AI工具的使用心得</li>
+            </ol>
+
+            <h2>💡 学习建议</h2>
+
+            <div class="highlight-box">
+                <h3>1. 循序渐进</h3>
+                <ul>
+                    <li>不要试图一次性学完所有模块</li>
+                    <li>每个模块完成后,充分实践再进入下一个模块</li>
+                    <li>如果某个模块特别有收获,可以延长学习时间</li>
+                </ul>
+            </div>
+
+            <div class="highlight-box">
+                <h3>2. 实践优先</h3>
+                <ul>
+                    <li>每个学习内容都要落实到实践任务</li>
+                    <li>尽量用自己的项目代码练习</li>
+                    <li>不要只看文档,要动手操作</li>
+                </ul>
+            </div>
+
+            <div class="highlight-box">
+                <h3>3. 记录总结</h3>
+                <ul>
+                    <li>建立学习笔记</li>
+                    <li>记录AI工具的使用技巧</li>
+                    <li>总结遇到的问题和解决方案</li>
+                </ul>
+            </div>
+
+            <div class="highlight-box">
+                <h3>4. 灵活调整</h3>
+                <ul>
+                    <li>根据工作需要调整学习重点</li>
+                    <li>如果某个模块不适合你,可以跳过或调整</li>
+                    <li>保持学习的连续性,但不要给自己太大压力</li>
+                </ul>
+            </div>
+
+            <h2>🚀 开始行动</h2>
+
+            <h3>立即开始</h3>
+            <ol>
+                <li>注册一个AI编程助手账号(ChatGPT或Claude)</li>
+                <li>用AI解释一个你熟悉的系统代码</li>
+                <li>记录第一次使用AI的体验和问题</li>
+            </ol>
+
+            <h3>第一个月目标</h3>
+            <ul class="goals-list">
+                <li>完成模块1(2-3周)</li>
+                <li>掌握AI编程助手的基本使用</li>
+                <li>用AI重构一个模块代码</li>
+                <li>建立AI编程工作流</li>
+            </ul>
+
+            <h3>前三个月目标</h3>
+            <ul class="goals-list">
+                <li>完成模块1和模块2</li>
+                <li>掌握AI在系统开发中的应用</li>
+                <li>生成完整的技术文档</li>
+                <li>建立AI辅助的开发流程</li>
+            </ul>
+
+            <h3>前六个月目标</h3>
+            <ul class="goals-list">
+                <li>完成模块1-3</li>
+                <li>掌握AI在性能优化中的应用</li>
+                <li>建立性能监控和优化机制</li>
+            </ul>
+
+            <h3>前九个月目标</h3>
+            <ul class="goals-list">
+                <li>完成模块1-4</li>
+                <li>掌握AI在数据驱动中的应用</li>
+                <li>建立数据驱动开发流程</li>
+            </ul>
+
+            <h3>前十二个月目标</h3>
+            <ul class="goals-list">
+                <li>完成所有五个模块</li>
+                <li>掌握AI在资源管理中的应用</li>
+                <li>建立完整的AI辅助开发体系</li>
+            </ul>
+
+            <h2>❓ 常见问题</h2>
+
+            <div class="qa-item">
+                <p class="question">Q1: AI生成的代码可靠吗?</p>
+                <p class="answer">A: AI生成的代码需要人工审查和测试,不能完全依赖AI。AI是辅助工具,不是替代品。</p>
+            </div>
+
+            <div class="qa-item">
+                <p class="question">Q2: 如果没有游戏数据怎么办?</p>
+                <p class="answer">A: 可以使用模拟数据或者公开的游戏数据集,关键是掌握AI分析数据的方法。</p>
+            </div>
+
+            <div class="qa-item">
+                <p class="question">Q3: 学习过程中遇到问题怎么办?</p>
+                <p class="answer">A: 可以查阅AI工具的官方文档,或者在开发者社区寻求帮助。</p>
+            </div>
+
+            <div class="qa-item">
+                <p class="question">Q4: 学习周期可以调整吗?</p>
+                <p class="answer">A: 完全可以。本计划的设计初衷就是灵活可调整,根据你的实际情况调整学习节奏。</p>
+            </div>
+
+            <div class="qa-item">
+                <p class="question">Q5: 资源管理模块适合所有项目吗?</p>
+                <p class="answer">A: 资源管理是UE4项目的必修课,无论项目大小都需要关注。本模块的内容可以灵活调整,根据项目实际资源情况选择重点。</p>
+            </div>
+
+            <div class="qa-item">
+                <p class="question">Q6: 如何收集项目资源数据?</p>
+                <p class="answer">A: 可以使用UE4内置的资源管理工具(如Referencer Viewer、Asset Audit Tool),或者使用Python脚本分析项目目录,导出资源列表和统计信息。</p>
+            </div>
+
+            <h2>📝 附录</h2>
+
+            <h3>A. Prompt模板示例</h3>
+
+            <h4>代码解释Prompt</h4>
+            <pre><code>请详细解释以下代码的功能和设计思路:
+[粘贴代码]
+
+请包含:
+1. 整体架构说明
+2. 关键类和函数的作用
+3. 数据流程
+4. 潜在问题和改进建议</code></pre>
+
+            <h4>代码重构Prompt</h4>
+            <pre><code>请分析以下代码并提出重构方案:
+[粘贴代码]
+
+请包含:
+1. 当前代码存在的问题
+2. 详细的重构方案
+3. 重构后的代码
+4. 重构的优势和风险</code></pre>
+
+            <h4>性能分析Prompt</h4>
+            <pre><code>请分析以下性能数据:
+[粘贴性能数据]
+
+请包含:
+1. 性能瓶颈分析
+2. 优化建议(按优先级排序)
+3. 具体的优化方案</code></pre>
+
+            <h4>资源分析Prompt</h4>
+            <pre><code>请分析以下项目资源数据:
+[粘贴资源列表和统计数据]
+
+请包含:
+1. 资源占用TOP榜(按大小排序)
+2. 冗余或未使用资源识别
+3. 资源优化建议(按优先级排序)
+4. 资源管理最佳实践建议</code></pre>
+
+            <h4>资源优化Prompt</h4>
+            <pre><code>请为以下资源制定优化方案:
+[粘贴资源信息和当前状态]
+
+请包含:
+1. 当前资源存在的问题
+2. 详细的优化方案(压缩、降级、流式加载等)
+3. 优化后预期效果(内存减少、加载时间缩短等)
+4. 优化实施步骤和注意事项</code></pre>
+
+            <h3>B. 学习资源链接</h3>
+            <ul>
+                <li>ChatGPT: <a href="https://chat.openai.com" target="_blank">https://chat.openai.com</a></li>
+                <li>Claude: <a href="https://claude.ai" target="_blank">https://claude.ai</a></li>
+                <li>Unreal Engine文档: <a href="https://docs.unrealengine.com" target="_blank">https://docs.unrealengine.com</a></li>
+                <li>Unreal Insights文档: <a href="https://docs.unrealengine.com/5.0/en-US/interactive-experiences/unreal-insights" target="_blank">https://docs.unrealengine.com/5.0/en-US/interactive-experiences/unreal-insights</a></li>
+                <li>Unreal资源管理文档: <a href="https://docs.unrealengine.com/5.0/en-US/ProductionPipelines/AssetManagement" target="_blank">https://docs.unrealengine.com/5.0/en-US/ProductionPipelines/AssetManagement</a></li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>🎉 祝你学习顺利,在AI时代保持竞争力! 🚀</p>
+        </div>
+    </div>
+</body>
+</html>
