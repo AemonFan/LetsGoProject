@@ -1,6 +1,45 @@
-资源分包：
-	玩法多样，支持分包按需加载，避免一次性加载过多资源，降低内存峰值。
-	每个玩法可分为多个资源包按需加载，狼人玩法只需下载基础包（小包）资源即可开始游戏，商业化资源等在资源包（大包）中，需要额外下载才能使用。
+AssetManager资产管理
+
+	资源分包：
+		元梦之星项目项目庞大，玩法多样，每个玩法可分为多个资源包，每个资源包可单独下载（DownloadChunks），减少内存占用；且支持按需加载（MountChunks）/卸载（），避免一次性加载过多资源，降低内存峰值。
+		狼人玩法只需下载基础包（小包）资源即可开始游戏，商业化资源等在资源包（大包）中，需要额外下载才能使用。
+		
+	资产管理：https://dev.epicgames.com/documentation/zh-cn/unreal-engine/asset-management?application_version=4.27
+
+	准备资产进行分块：https://dev.epicgames.com/documentation/zh-cn/unreal-engine/preparing-assets-for-chunking?application_version=4.27
+
+	烘焙和数据块划分：https://dev.epicgames.com/documentation/zh-cn/unreal-engine/cooking-and-chunking?application_version=4.27
+
+	在游戏中实现ChunkDownloader(.pak文件在应用程序中的下载与加载)：https://dev.epicgames.com/documentation/zh-cn/unreal-engine/implementing-chunkdownloader-ingame?application_version=4.27
+
+	Chunk与.pak的关系：	一个 Chunk 可以包含多个 .pak 文件，它们是一对多的关系。（可参考：struct FChunk 与 struct FPakFile）
+		两者的职责区别:
+		概念	       类型	                职责
+		Chunk	   逻辑单元（FChunk）	    以 ChunkId 为标识，是游戏逻辑层面的"功能包"，例如某个玩法、某个关卡的所有资源集合
+		.pak 文件   物理文件（FPakFile）	实际存储在磁盘/CDN 上的压缩文件，是下载和挂载的最小物理单元
+		
+		为什么要这样设计？从 FPakFileEntry 的定义可以看出：
+			struct FPakFileEntry
+			{
+				FString FileName;       // pak 文件名（唯一）
+				uint64 FileSize = 0;    // 文件大小（字节）
+				FString FileVersion;    // 版本/SHA1 哈希
+				int32 ChunkId = -1;     // 归属的 ChunkId ← 多个 PakFile 可以有相同的 ChunkId
+				FString RelativeUrl;    // CDN 上的相对路径
+			};
+		
+		这样设计的好处是：
+			控制单个 .pak 文件大小：单个 .pak 文件过大会导致下载失败后需要重新下载整个文件，拆分成多个小 .pak 可以支持断点续传和并发下载
+			灵活的热更粒度：某个 Chunk 中只有部分资源更新时，只需要替换对应的 .pak 文件，而不是整个 Chunk 重新下载
+			并发下载：同一个 Chunk 的多个 .pak 文件可以同时下载（TargetDownloadsInFlight 控制并发数），加快整体下载速度
+			挂载顺序控制：MountChunkInternal 会按顺序挂载同一 Chunk 内的所有 .pak 文件，保证资源覆盖关系正确
+		
+		操作粒度的对应关系
+			下载（Download）：以 .pak 文件 为单位（DownloadPakFileInternal）
+			挂载（Mount）：以 Chunk 为单位（MountChunk），但内部会依次挂载该 Chunk 下的所有 .pak 文件
+			卸载（Unmount）：以 .pak 文件 为单位（UnmountPakFile）
+			游戏逻辑感知：以 Chunk 为单位（GetChunkStatus、OnChunkMounted）
+
 
 AssetNameMapping资源映射：
 	资源名称为key，映射资源在引擎中的路径，映射文件可热更，进入某个玩法Mount加载玩法对应的AssetNameMapping，退出玩法后UnMount卸载AssetNameMapping,减少AssetNameMapping映射文件本身占用的内存空间，同时起到空间隔离的作用，且能够减少资源查询区间，保持资源查询性能稳定。
@@ -111,6 +150,8 @@ AssetNameMapping资源映射：
 
 		> **注意**：如果先调用了 `ClearAssetNameMappingByPath` 清除了映射表，再想调用 `UnloadAssetObject` 就会失败，因为 `GetAssetObjectPath` 找不到短名对应的路径了。所以正确的退出顺序应该是：**先卸载资源，再清除映射表**，或者在清除映射表之前记录好需要卸载的长路径列表。
 		
+
+
 
 项目中资源加载失败的原因总结：
 	1、资源本身不存在导致加载失败
