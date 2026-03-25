@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AssetNameMapping 短名映射系统 - LetsGo 资源管理</title>
+<link rel="stylesheet" href="shared.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true, theme:'dark', fontSize:16, flowchart:{nodeSpacing:30, rankSpacing:50, curve:'basis', useMaxWidth:false}, sequence:{useMaxWidth:false, actorFontSize:15, messageFontSize:14, noteFontSize:14}, themeVariables:{primaryColor:'#6366f1',primaryTextColor:'#f1f5f9',primaryBorderColor:'#818cf8',lineColor:'#64748b',secondaryColor:'#1e293b',tertiaryColor:'#0f172a',fontSize:'16px'}});</script>
+</head>
+<body>
+
+<button class="sidebar-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open');document.querySelector('.sidebar-overlay').classList.toggle('active');">☰</button>
+<div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('active');"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1><span class="logo">📦</span> 资源管理文档</h1>
+    <div class="subtitle">LetsGo（元梦之星）项目</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-label">概览</div>
+      <a class="nav-item" href="../AssetManager资源管理说明文档.html">
+        <span class="nav-icon">🏠</span><span class="nav-label">首页概览</span>
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">核心模块</div>
+      <a class="nav-item active" href="asset-mapping.html">
+        <span class="nav-icon">🗺️</span><span class="nav-label">AssetNameMapping 映射</span>
+      </a>
+      <a class="nav-item" href="umoe-asset-manager.html">
+        <span class="nav-icon">⚙️</span><span class="nav-label">UMoeAssetManager</span>
+      </a>
+      <a class="nav-item" href="chunk-pak.html">
+        <span class="nav-icon">📦</span><span class="nav-label">Chunk 与 .pak 机制</span>
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">扩展知识</div>
+      <a class="nav-item" href="ue4-packaging.html">
+        <span class="nav-icon">🔧</span><span class="nav-label">UE4 资源打包</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<div class="main">
+<div class="main-content">
+
+<div class="page-hero">
+  <h1>🗺️ AssetNameMapping <span style="color:var(--accent-light);">短名映射系统</span></h1>
+  <p class="lead">资源名称作为 key，映射资源在引擎中的完整路径。映射文件支持热更，是整个资源管理体系的核心寻址机制。</p>
+  <div class="badges">
+    <span class="badge"><span class="dot dot-green"></span>支持热更</span>
+    <span class="badge"><span class="dot dot-blue"></span>按玩法隔离</span>
+    <span class="badge"><span class="dot dot-purple"></span>多包合并</span>
+  </div>
+</div>
+<div class="sources">来源：元梦之星项目AssetNameMapping资源映射.md、元梦之星项目资源管理经验总结.md</div>
+
+<!-- 映射原理 -->
+<h2 id="principle"><span class="h-icon">📖</span> 映射文件工作原理</h2>
+<p class="desc">AssetNameMapping 本质是一张 <strong>短名 → 长路径</strong> 的字符串字典。每条记录将业务层使用的短名映射到引擎中的完整资源路径。</p>
+
+<div class="card">
+<div class="code-block"><span class="lang">映射示例</span>
+<span class="cm">// AssetNameMapping 文件内容（txt 格式）</span>
+hero_mesh → <span class="st">/Game/Characters/Hero/SK_Hero.SK_Hero</span>
+hero_anim → <span class="st">/Game/Characters/Hero/Anim/ABP_Hero.ABP_Hero_C</span>
+lobby_bg  → <span class="st">/Game/UI/Lobby/T_LobbyBG.T_LobbyBG</span></div>
+
+<ul class="feat" style="margin-top:16px;">
+  <li><span class="ck">✅</span> <span>支持热更 — 映射文件可随热更包下发，实现路径动态替换</span></li>
+  <li><span class="ck">✅</span> <span>支持多包合并 — <code>MergeAssetNameMappingByPathAndKey</code> 合并多个映射文件到同一 Key</span></li>
+  <li><span class="ck">✅</span> <span>按玩法隔离 — 每个玩法独立映射文件，Mount/UnMount 管理</span></li>
+  <li><span class="ck">✅</span> <span>预留 80000 条目容量 — 满足大型项目资产规模</span></li>
+</ul>
+</div>
+
+<div class="callout callout-success">
+  <span class="ico">🎯</span>
+  <div><strong>关键优势：</strong>业务代码与资产路径完全解耦，资产移动/重命名只需更新映射文件，不需要修改任何业务代码。策划/程序习惯用短名配置资产，大幅降低协作成本。</div>
+</div>
+
+<!-- 关系图 -->
+<h2 id="relation"><span class="h-icon">🔗</span> 映射表与资源的关系</h2>
+<p class="desc">映射表仅是索引/目录，不持有任何 UObject 资源引用，也不参与 UE 的 GC 系统。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+graph LR
+    A["AssetNameMapping 映射表\n（ShortName → FullPath）"] -->|"仅是索引/目录"| B["FStreamableManager\n（实际资源加载/持有）"]
+    B --> C["UObject 资源实例\n（内存中的实际资源）"]
+</pre>
+</div>
+
+<!-- Mount/UnMount 机制 -->
+<h2 id="mount"><span class="h-icon">🔄</span> 按玩法 Mount / UnMount 机制</h2>
+<p class="desc">进入某个玩法时加载对应的 AssetNameMapping 映射文件，退出玩法后卸载。实现内存按需管理与命名空间隔离。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    participant Game as 游戏逻辑
+    participant Mgr as UMoeAssetManager
+    participant Map as AssetNameMappingInfoMap
+    participant SM as FStreamableManager
+
+    Game->>Mgr: 进入玩法 → InitAssetNameMappingByPath()
+    Mgr->>Map: 加载映射文件，写入 TMap（短名→路径）
+    Note over Map: 仅占用字符串内存，资源未加载
+
+    Game->>Mgr: 加载资源 → LoadSyncAssetObject("hero_mesh")
+    Mgr->>Map: 查询短名 → 得到 FSoftObjectPath
+    Mgr->>SM: RequestSyncLoad(FSoftObjectPath)
+    SM-->>Game: 返回 UObject*
+
+    Game->>Mgr: 退出玩法
+    Mgr->>SM: Unload(FSoftObjectPath) — 先卸载资源！
+    Mgr->>Map: 移除该玩法的映射条目 — 再清除映射！
+</pre>
+</div>
+
+<h3>工作流程详解</h3>
+<div class="flow-steps">
+  <div class="flow-step">
+    <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+    <div class="step-body">
+      <div class="step-title">1. 进入玩法 → InitAssetNameMappingByPath()</div>
+      <div class="step-desc">加载该玩法的映射文件，写入 TMap&lt;短名 → 路径&gt;，此时仅占用字符串内存，资源未加载</div>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+    <div class="step-body">
+      <div class="step-title">2. 加载资源 → LoadSyncAssetObject("hero_mesh")</div>
+      <div class="step-desc">通过映射表查询短名 → 得到 FSoftObjectPath → FStreamableManager 加载实际 UObject</div>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+    <div class="step-body">
+      <div class="step-title">3. 退出玩法 → 先卸载资源，再清除映射表</div>
+      <div class="step-desc">调用 UnloadAssetObject() 卸载已加载资源，再调用 ClearAssetNameMappingByPath() 释放映射字典内存</div>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+    <div class="step-body">
+      <div class="step-title">4. 等待 GC → 真正回收 UObject 内存</div>
+      <div class="step-desc">资源引用计数归零后，下次 GC 时真正回收内存</div>
+    </div>
+  </div>
+</div>
+
+<!-- 四大优点 -->
+<h3>Mount/UnMount 的四大设计优势</h3>
+<div class="grid-2">
+  <div class="card">
+    <h4 style="margin-top:0;">🧠 映射表内存按需管理</h4>
+    <p style="color:var(--text-muted); font-size:0.9rem;">每个玩法的 <code>AssetNameMappingInfo</code>（预留 80000 条目）在退出时通过 <code>TSharedPtr</code> 引用计数归零完全释放，包括 <code>ShortNameToPath</code>、<code>AssetKVStringStore</code> 等数据结构全部回收。</p>
+    <div class="code-block"><span class="lang">C++</span>
+<span class="cm">// Init 时记录了加载前后的内存差值</span>
+<span class="tp">uint64</span> UsedMemoryBefore = MemoryStatsBefore.UsedPhysical;
+<span class="cm">// ... 加载映射文件 ...</span>
+<span class="tp">uint64</span> UsedMemoryAfter = MemoryStatsAfter.UsedPhysical;
+MOE_LOG(LogMoeAssetManager, Log,
+  TEXT(<span class="st">"InitAssetNameMappingByPath Diff %lld"</span>),
+  UsedMemoryAfter - UsedMemoryBefore);</div>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0;">🔒 命名空间隔离</h4>
+    <p style="color:var(--text-muted); font-size:0.9rem;">不同玩法可以存在同名短名（如都有 <code>"hero_mesh"</code>），各玩法的映射表是独立的 <code>AssetNameMappingInfo</code> 实例，互不干扰。退出玩法后清除该玩法的映射，不影响其他玩法。</p>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0;">♻️ 热更动态替换</h4>
+    <p style="color:var(--text-muted); font-size:0.9rem;">映射文件可以随热更包下发，进入玩法时加载最新的映射文件，退出后卸载。下次进入时重新加载，天然支持<strong>资产路径的热更替换</strong>，不需要重启游戏。</p>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0;">⚡ 查询性能稳定</h4>
+    <p style="color:var(--text-muted); font-size:0.9rem;"><code>GetAssetObjectPath</code> 遍历 <code>AssetNameMappingInfoMap</code> 的所有条目。按需 Mount/UnMount 保证 Map 中始终只有当前活跃玩法的映射，<strong>查询复杂度保持在较低水平</strong>。</p>
+    <div class="code-block"><span class="lang">C++</span>
+<span class="kw">for</span>(<span class="kw">auto</span>&amp; AssetNameMappingInfo : AssetNameMappingInfoMap)
+{
+    <span class="kw">const</span> <span class="tp">FString</span>* FoundPath = AssetNameMappingInfo.Value->ShortNameToPath.<span class="fn">Find</span>(LowerShortName);
+    ...
+}</div>
+  </div>
+</div>
+
+<!-- 关键认知 -->
+<h2 id="key-insight"><span class="h-icon">⚠️</span> 关键认知：卸载映射文件 ≠ 卸载资源</h2>
+<p class="desc">这是这套设计中最关键的一个区分点。</p>
+
+<div class="callout callout-warn">
+  <span class="ico">⚠️</span>
+  <div><strong>卸载映射文件 ≠ 卸载资源！</strong><br><code>ClearAssetNameMappingByPath</code> 只释放字符串字典内存，不触发任何 UObject 资源的卸载。资源的实际生命周期由 <code>FStreamableManager</code> 控制。</div>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">映射表 vs 资源 — 生命周期对比</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>操作</th><th>映射表内存</th><th>资源（UObject）内存</th></tr></thead>
+<tbody>
+<tr>
+  <td><code>InitAssetNameMappingByPath</code></td>
+  <td style="color:#22c55e;">✅ 分配（加载短名→路径字典）</td>
+  <td style="color:var(--text-muted);">❌ 不变（资源未加载）</td>
+</tr>
+<tr>
+  <td><code>LoadSyncAssetObject / RequestAsyncLoad</code></td>
+  <td style="color:var(--text-muted);">❌ 不变</td>
+  <td style="color:#22c55e;">✅ 资源加载进内存</td>
+</tr>
+<tr>
+  <td><code>ClearAssetNameMappingByPath</code></td>
+  <td style="color:#22c55e;">✅ 释放（字典内存回收）</td>
+  <td style="color:#ef4444;">❌ <strong>资源仍在内存中</strong></td>
+</tr>
+<tr>
+  <td><code>UnloadAssetObject</code></td>
+  <td style="color:var(--text-muted);">❌ 不变</td>
+  <td style="color:#22c55e;">✅ 资源从 StreamableManager 释放</td>
+</tr>
+<tr>
+  <td>GC 触发</td>
+  <td style="color:var(--text-muted);">❌ 不变</td>
+  <td style="color:#22c55e;">✅ 无引用的资源被 GC 回收</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">UnloadAssetObject 实际卸载逻辑</h3>
+<div class="code-block"><span class="lang">C++</span>
+<span class="cm">// UnloadAssetObject 才是真正触发资源卸载的接口</span>
+<span class="kw">void</span> <span class="tp">UMoeAssetManager</span>::<span class="fn">UnloadAssetObject</span>(<span class="kw">const</span> <span class="tp">FString</span>&amp; AssetNameKey)
+{
+    <span class="cm">// 先通过短名查到长路径</span>
+    <span class="kw">const</span> <span class="tp">FSoftObjectPath</span>* AssetPath = <span class="fn">GetAssetObjectPath</span>(AssetNameKey);
+    <span class="kw">if</span> (AssetPath != <span class="kw">nullptr</span> &amp;&amp; AssetPath-><span class="fn">IsValid</span>())
+    {
+        <span class="tp">TArray</span>&lt;<span class="tp">TSharedRef</span>&lt;<span class="tp">FStreamableHandle</span>&gt;&gt; HandleList;
+        <span class="kw">if</span> (StreamableManager-><span class="fn">GetActiveHandles</span>(*AssetPath, HandleList))
+        {
+            StreamableManager-><span class="fn">Unload</span>(*AssetPath);  <span class="cm">// 这才是真正卸载资源</span>
+        }
+    }
+}</div>
+</div>
+
+<div class="callout callout-danger">
+  <span class="ico">🚨</span>
+  <div>
+    <strong>正确的退出顺序：</strong><br>
+    ① 先调用 <code>UnloadAssetObject()</code> 卸载资源（此时映射表还在，能查到路径）<br>
+    ② 再调用 <code>ClearAssetNameMappingByPath()</code> 清除映射表<br>
+    ③ 等待 GC 触发，真正回收 UObject 内存<br><br>
+    若顺序颠倒（先清映射再卸资源），<code>GetAssetObjectPath</code> 找不到路径，资源将无法被主动卸载！
+  </div>
+</div>
+
+<!-- 资源卸载时机 -->
+<h2 id="unload-timing"><span class="h-icon">⏱️</span> 资源实际卸载时机</h2>
+<p class="desc">退出玩法时，资源真正被释放需要满足以下条件之一。</p>
+
+<div class="card">
+<div class="flow-steps">
+  <div class="flow-step">
+    <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+    <div class="step-body">
+      <div class="step-title">主动调用 UnloadAssetObject</div>
+      <div class="step-desc">在玩法退出逻辑中逐一卸载已加载的资源</div>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+    <div class="step-body">
+      <div class="step-title">FStreamableHandle 超出作用域</div>
+      <div class="step-desc">如果加载时使用的 Handle 被释放（bManageActiveHandle = false 且 Handle 析构），StreamableManager 会释放对资源的引用</div>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+    <div class="step-body">
+      <div class="step-title">等待 GC</div>
+      <div class="step-desc">资源引用计数归零后，下次 GC 时才真正回收内存</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="footer">
+  <p>LetsGo（元梦之星）资源管理系统 · AssetNameMapping 映射系统</p>
+  <p style="margin-top:6px; opacity:0.5;">Generated: 2026-03-25</p>
+</div>
+
+</div>
+</div>
+</body>
+</html>

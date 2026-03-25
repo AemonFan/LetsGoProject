@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UE4 资源打包流程与 API - LetsGo 资源管理</title>
+<link rel="stylesheet" href="shared.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true, theme:'dark', fontSize:16, flowchart:{nodeSpacing:30, rankSpacing:50, curve:'basis', useMaxWidth:false}, sequence:{useMaxWidth:false, actorFontSize:15, messageFontSize:14, noteFontSize:14}, themeVariables:{primaryColor:'#6366f1',primaryTextColor:'#f1f5f9',primaryBorderColor:'#818cf8',lineColor:'#64748b',secondaryColor:'#1e293b',tertiaryColor:'#0f172a',fontSize:'16px'}});</script>
+</head>
+<body>
+
+<button class="sidebar-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open');document.querySelector('.sidebar-overlay').classList.toggle('active');">☰</button>
+<div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('active');"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1><span class="logo">📦</span> 资源管理文档</h1>
+    <div class="subtitle">LetsGo（元梦之星）项目</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-label">概览</div>
+      <a class="nav-item" href="../AssetManager资源管理说明文档.html">
+        <span class="nav-icon">🏠</span><span class="nav-label">首页概览</span>
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">核心模块</div>
+      <a class="nav-item" href="asset-mapping.html">
+        <span class="nav-icon">🗺️</span><span class="nav-label">AssetNameMapping 映射</span>
+      </a>
+      <a class="nav-item" href="umoe-asset-manager.html">
+        <span class="nav-icon">⚙️</span><span class="nav-label">UMoeAssetManager</span>
+      </a>
+      <a class="nav-item" href="chunk-pak.html">
+        <span class="nav-icon">📦</span><span class="nav-label">Chunk 与 .pak 机制</span>
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">扩展知识</div>
+      <a class="nav-item active" href="ue4-packaging.html">
+        <span class="nav-icon">🔧</span><span class="nav-label">UE4 资源打包</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<div class="main">
+<div class="main-content">
+
+<div class="page-hero">
+  <h1>🔧 UE4 资源打包 <span style="color:var(--accent-light);">流程与 API</span></h1>
+  <p class="lead">资源打包流程将开发阶段的原始资源转换为平台特定的优化格式，生成可分发的 Pak 文件。涵盖 UnrealPak 工具、Cook 系统、着色器编译和分包增量更新。</p>
+  <div class="badges">
+    <span class="badge"><span class="dot dot-green"></span>UnrealPak 工具</span>
+    <span class="badge"><span class="dot dot-blue"></span>Cook 系统</span>
+    <span class="badge"><span class="dot dot-purple"></span>着色器编译</span>
+    <span class="badge"><span class="dot dot-orange"></span>增量更新</span>
+  </div>
+</div>
+<div class="sources">来源：扩展：UE4引擎AIP - 2.3. 资源打包流程.md、扩展：UE4引擎AIP - 5.2. 资源打包API.md</div>
+
+<!-- 打包概述 -->
+<h2 id="overview"><span class="h-icon">📋</span> 资源打包概述</h2>
+<p class="desc">资源打包将开发阶段的原始资源转换为平台特定的优化格式，生成可分发的 Pak 文件。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+flowchart TD
+    A["原始资源文件\nAssets/Source Files"] --> B["Cook系统\n资源格式转换"]
+    B --> C["平台特定资源"]
+    C --> D["UnrealPak打包工具\n生成Pak文件"]
+    D --> E["完整Pak或分包Pak"]
+    E --> F["发布分发"]
+</pre>
+</div>
+
+<!-- UnrealPak 工具 -->
+<h2 id="unrealpak"><span class="h-icon">🔨</span> UnrealPak 工具打包机制</h2>
+<p class="desc">UnrealPak 是资源打包的核心组件，通过 ExecuteUnrealPak 函数实现统一的 Pak 文件管理。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+flowchart LR
+    A["输入参数\n命令行解析"] --> B["UnrealPak入口"]
+    B --> C["ExecuteUnrealPak\n核心处理逻辑"]
+    C --> D{操作类型判断}
+    D -->|Test| E["测试Pak完整性"]
+    D -->|Extract| F["提取文件内容"]
+    D -->|Create| G["创建新Pak文件"]
+    D -->|List| H["列出文件列表"]
+    D -->|Diff| I["比较差异"]
+    E --> J["返回结果"]
+    F --> J
+    G --> J
+    H --> J
+    I --> J
+</pre>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">主要功能</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>参数</th><th>功能</th></tr></thead>
+<tbody>
+<tr><td><code>-Test</code></td><td>测试 Pak 文件完整性</td></tr>
+<tr><td><code>-Extract</code></td><td>提取 Pak 文件内容</td></tr>
+<tr><td><code>-Create</code></td><td>创建 Pak 文件</td></tr>
+<tr><td><code>-List</code></td><td>列出 Pak 文件内容</td></tr>
+<tr><td><code>-Diff</code></td><td>比较两个 Pak 文件差异</td></tr>
+<tr><td><code>-Batch</code></td><td>批处理模式</td></tr>
+</tbody>
+</table>
+</div>
+<p style="color:var(--text-muted); font-size:0.88rem; margin-top:12px;">典型调用示例：<code>UnrealPak.exe Game.pak -create=ResponseFile.txt -order=OrderMap.txt -compression=Oodle -encrypt</code></p>
+</div>
+
+<!-- FPakOrderMap -->
+<h2 id="pak-order"><span class="h-icon">📊</span> FPakOrderMap — 加载顺序优化</h2>
+<p class="desc">管理 Pak 文件中文件的顺序索引，优化资源加载性能。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    participant Client
+    participant FPakOrderMap
+    participant OrderMap
+    participant MaxIndex
+
+    Client->>FPakOrderMap: AddOffset("Texture.uasset", 100)
+    FPakOrderMap->>OrderMap: 存储偏移量映射
+    Client->>FPakOrderMap: AddOffset("Mesh.uasset", 200)
+    FPakOrderMap->>OrderMap: 存储偏移量映射
+    Client->>FPakOrderMap: ConvertOffsetsToOrder()
+    FPakOrderMap->>OrderMap: 遍历并转换
+    FPakOrderMap->>MaxIndex: 更新最大索引
+    Client->>FPakOrderMap: GetFileOrder("Mesh.uasset")
+    FPakOrderMap-->>Client: 返回排序索引(1)
+</pre>
+</div>
+
+<div class="callout callout-info">
+  <span class="ico">💡</span>
+  <div>通过顺序优化，频繁访问的资源可以放置在 Pak 文件开头，减少磁盘寻址时间，提升游戏启动和运行时的资源加载性能。</div>
+</div>
+
+<!-- Cook 系统 -->
+<h2 id="cook"><span class="h-icon">🍳</span> Cook 资源格式转换</h2>
+<p class="desc">Cook 系统负责将原始资源转换为平台特定格式。支持 CookOnTheFly（实时）和 CookByTheBook（批量）两种模式。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+classDiagram
+    class UCookOnTheFlyServer {
+        -ECookMode CurrentCookMode
+        -FCookByTheBookOptions CookByTheBookOptions
+        -FCookFlags CookFlags
+        +IsCookOnTheFlyMode() bool
+        +CollectFilesToCook()
+        +GenerateAssetRegistry()
+    }
+    class FPlatformManager {
+        -TArray PlatformDatas
+        -TArray SessionPlatforms
+        +AddRefCookOnTheFlyPlatform()
+        +ReleaseCookOnTheFlyPlatform()
+    }
+    class FCookCommandlet {
+        -bool bIterativeCooking
+        -bool bCookOnTheFly
+        -bool bCookAll
+        +CookOnTheFly()
+        +CookByTheBook()
+        +Main() int32
+    }
+    UCookOnTheFlyServer --> FPlatformManager
+    FCookCommandlet --> UCookOnTheFlyServer
+</pre>
+</div>
+
+<div class="grid-2">
+<div class="card">
+  <h4 style="margin-top:0;">CookOnTheFly 实时烹饪</h4>
+  <p style="color:var(--text-muted); font-size:0.88rem;">用于编辑器实时烹饪，按需处理请求队列。RequestQueue 遵循 FIFO 原则，LoadReadyQueue 按依赖关系排序。</p>
+</div>
+<div class="card">
+  <h4 style="margin-top:0;">CookByTheBook 批量烹饪</h4>
+  <p style="color:var(--text-muted); font-size:0.88rem;">用于大规模批量烹饪，支持 <code>bIterativeCooking</code>（增量烹饪）和 <code>bCookAll</code>（全量烹饪）选项。</p>
+</div>
+</div>
+
+<!-- CookPlatformManager -->
+<h2 id="platform-manager"><span class="h-icon">🖥️</span> CookPlatformManager — 多平台管理</h2>
+<p class="desc">通过引用计数管理多平台的 Cook 任务，支持自动清理和平台重映射。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+graph LR
+    A["AddRefCookOnTheFlyPlatform"] --> B["增加引用计数"]
+    B --> C{平台已存在?}
+    C -->|否| D["添加到SessionPlatforms"]
+    C -->|是| E["递增引用计数"]
+    E --> F["PruneUnreferencedSessionPlatforms"]
+    D --> F
+    F --> G["RemoveCookOnTheFlyPlatform"]
+</pre>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">核心接口</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>接口</th><th>功能</th></tr></thead>
+<tbody>
+<tr><td><code>AddRefCookOnTheFlyPlatform</code></td><td>增加平台引用计数</td></tr>
+<tr><td><code>ReleaseCookOnTheFlyPlatform</code></td><td>释放平台引用</td></tr>
+<tr><td><code>SelectSessionPlatforms</code></td><td>选择会话平台</td></tr>
+<tr><td><code>ClearSessionPlatforms</code></td><td>清理会话平台</td></tr>
+<tr><td><code>GetPlatformDataByName</code></td><td>通过名称获取平台数据</td></tr>
+<tr><td><code>RemapTargetPlatforms</code></td><td>重映射目标平台指针</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- 着色器变体 -->
+<h2 id="shader"><span class="h-icon">🎨</span> 着色器变体生成</h2>
+<p class="desc">ShaderCompileWorker 负责并行编译着色器资源，支持多平台着色器格式。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+flowchart TB
+    A["资源打包触发"] --> B["Cook系统分析材质"]
+    B --> C["ShaderCompileWorker启动"]
+    C --> D["多进程并行编译"]
+    D --> E["生成平台着色器变体"]
+    E --> F["写入派生数据缓存DDC"]
+    F --> G["打包到Pak文件"]
+    H["配置文件\nDefaultEngine.ini"] -.->|控制DDC行为| F
+</pre>
+</div>
+
+<!-- FPackageData 状态管理 -->
+<h2 id="package-data"><span class="h-icon">📦</span> FPackageData — 包数据状态跟踪</h2>
+<p class="desc">FPackageData 类跟踪每个包的烹饪状态，从空闲到保存的完整流转。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+stateDiagram-v2
+    [*] --> Empty: CreatePackageData
+    Empty --> Requested: 添加到请求队列
+    Requested --> Loading: GetLoadReadyQueue
+    Loading --> Save: 烹饪完成
+    Save --> Saved: 写入磁盘
+    Saved --> [*]
+    Loading --> Failed: 烹饪失败
+    Failed --> [*]
+</pre>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">核心方法</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>功能</th></tr></thead>
+<tbody>
+<tr><td><code>CreatePackageData</code></td><td>创建包数据</td></tr>
+<tr><td><code>FindPackageDataByPackageName</code></td><td>通过包名查找</td></tr>
+<tr><td><code>ClearCookedPlatforms</code></td><td>清理已烹饪平台</td></tr>
+<tr><td><code>SetState</code></td><td>设置包状态</td></tr>
+<tr><td><code>IsInProgress</code></td><td>检查是否进行中</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- 分包增量更新 -->
+<h2 id="incremental"><span class="h-icon">🔄</span> 分包安装与增量更新</h2>
+<p class="desc">支持通过 GenerateDiffPatch 生成增量补丁，只下载变更部分。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+flowchart TD
+    A["基线Pak文件\nv1.0"] --> B["新资源版本\nv1.1"]
+    B --> C["差异分析\nGenerateDiffPatch"]
+    C --> D["增量补丁Pak\nDelta.pak"]
+    D --> E["客户端下载补丁"]
+    E --> F["挂载补丁Pak\nMountAllPakFiles"]
+    F --> G["资源更新完成"]
+</pre>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">分包管理 API</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>API</th><th>功能</th></tr></thead>
+<tbody>
+<tr><td><code>RunUnrealPak</code></td><td>执行自动化打包</td></tr>
+<tr><td><code>UnpakBuild</code></td><td>解压 Pak 文件到目标目录</td></tr>
+<tr><td><code>GetUnrealPakLocation</code></td><td>获取 UnrealPak 工具位置</td></tr>
+<tr><td><code>ExtractPakFiles</code></td><td>按补丁层级解压</td></tr>
+<tr><td><code>SortFilesByPatchLayers</code></td><td>按层级排序</td></tr>
+<tr><td><code>CombinePacks</code></td><td>将多个 Pak 文件合并为单个 Pak 文件</td></tr>
+<tr><td><code>GenerateDiffPatch</code></td><td>生成两个 Pak 文件之间的差异补丁</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- 压缩优化 -->
+<h2 id="compression"><span class="h-icon">🗜️</span> 压缩与优化策略</h2>
+<p class="desc">支持多种压缩算法和优化配置。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+flowchart LR
+    A["原始资源"] --> B{优化策略选择}
+    B -->|纹理压缩| C["DefaultPVRTCQuality\nDefaultASTCQuality"]
+    B -->|LOD层次| D["选择LOD级别"]
+    B -->|平台差异化| E["平台特定格式"]
+    B -->|冗余剔除| F["删除未引用资源"]
+    C --> G["打包到Pak"]
+    D --> G
+    E --> G
+    F --> G
+    G --> H["优化后的发布包"]
+</pre>
+</div>
+
+<div class="grid-2">
+<div class="card">
+  <h4 style="margin-top:0;">压缩算法</h4>
+  <p style="color:var(--text-muted); font-size:0.88rem;">命令行参数指定：<code>-compression=Oodle</code>、<code>-compression=LZ4</code>。IoStore 通过 <code>SetUseIoStore(true)</code> 启用。</p>
+</div>
+<div class="card">
+  <h4 style="margin-top:0;">加密与签名</h4>
+  <p style="color:var(--text-muted); font-size:0.88rem;">通过 <code>FEncryptionKeyCache</code> 类管理加密密钥，<code>GetPakSignatureFile</code> 进行签名验证。控制台变量 <code>GPakCache_Enable</code> 启用缓存。</p>
+</div>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">打包配置项</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>配置项</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>bEnableCookOnTheSide</code></td><td>启用侧面烹饪</td></tr>
+<tr><td><code>bEnableBuildDDCInBackground</code></td><td>后台构建派生数据缓存</td></tr>
+<tr><td><code>bIterativeCookingForLaunchOn</code></td><td>启用增量烹饪</td></tr>
+<tr><td><code>DefaultPVRTCQuality</code></td><td>PVRTC 纹理压缩质量</td></tr>
+<tr><td><code>DefaultASTCQualityBySize</code></td><td>ASTC 纹理按尺寸压缩质量</td></tr>
+<tr><td><code>DefaultASTCQualitySpeed</code></td><td>ASTC 纹理按速度压缩质量</td></tr>
+<tr><td><code>bEnablePakLog</code></td><td>启用 Pak 日志</td></tr>
+<tr><td><code>GPakCache_Enable</code></td><td>启用 Pak 缓存</td></tr>
+<tr><td><code>GEnablePakFDPruning</code></td><td>启用文件描述符修剪</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="footer">
+  <p>LetsGo（元梦之星）资源管理系统 · UE4 资源打包流程与 API</p>
+  <p style="margin-top:6px; opacity:0.5;">Generated: 2026-03-25</p>
+</div>
+
+</div>
+</div>
+</body>
+</html>

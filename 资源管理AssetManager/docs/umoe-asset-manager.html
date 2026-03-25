@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UMoeAssetManager 深度分析 - LetsGo 资源管理</title>
+<link rel="stylesheet" href="shared.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true, theme:'dark', fontSize:16, flowchart:{nodeSpacing:30, rankSpacing:50, curve:'basis', useMaxWidth:false}, sequence:{useMaxWidth:false, actorFontSize:15, messageFontSize:14, noteFontSize:14}, themeVariables:{primaryColor:'#6366f1',primaryTextColor:'#f1f5f9',primaryBorderColor:'#818cf8',lineColor:'#64748b',secondaryColor:'#1e293b',tertiaryColor:'#0f172a',fontSize:'16px'}});</script>
+</head>
+<body>
+
+<button class="sidebar-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open');document.querySelector('.sidebar-overlay').classList.toggle('active');">☰</button>
+<div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('active');"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1><span class="logo">📦</span> 资源管理文档</h1>
+    <div class="subtitle">LetsGo（元梦之星）项目</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-label">概览</div>
+      <a class="nav-item" href="../AssetManager资源管理说明文档.html">
+        <span class="nav-icon">🏠</span><span class="nav-label">首页概览</span>
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">核心模块</div>
+      <a class="nav-item" href="asset-mapping.html">
+        <span class="nav-icon">🗺️</span><span class="nav-label">AssetNameMapping 映射</span>
+      </a>
+      <a class="nav-item active" href="umoe-asset-manager.html">
+        <span class="nav-icon">⚙️</span><span class="nav-label">UMoeAssetManager</span>
+      </a>
+      <a class="nav-item" href="chunk-pak.html">
+        <span class="nav-icon">📦</span><span class="nav-label">Chunk 与 .pak 机制</span>
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">扩展知识</div>
+      <a class="nav-item" href="ue4-packaging.html">
+        <span class="nav-icon">🔧</span><span class="nav-label">UE4 资源打包</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<div class="main">
+<div class="main-content">
+
+<div class="page-hero">
+  <h1>⚙️ UMoeAssetManager <span style="color:var(--accent-light);">深度分析</span></h1>
+  <p class="lead">元梦之星定制的资源管理器，与 UE4 原生 UAssetManager 的设计哲学差异及六大核心优势。</p>
+  <div class="badges">
+    <span class="badge"><span class="dot dot-purple"></span>短名映射</span>
+    <span class="badge"><span class="dot dot-blue"></span>FlatBuffers+MMap</span>
+    <span class="badge"><span class="dot dot-green"></span>性能埋点</span>
+    <span class="badge"><span class="dot dot-orange"></span>失败上报</span>
+  </div>
+</div>
+<div class="sources">来源：元梦之星项目资源管理UMoeAssetManager分析.md、元梦之星项目资源管理模块分析总结.md</div>
+
+<!-- 架构定位差异 -->
+<h2 id="architecture"><span class="h-icon">🏗️</span> 架构定位差异</h2>
+<p class="desc">两者在设计哲学上有根本不同。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+graph TD
+    A[UAssetManager] -->|UE4原生| B[PrimaryAsset 管理体系]
+    B --> B1[资产类型注册/扫描]
+    B --> B2[Bundle 状态管理]
+    B --> B3[Cook/Chunk 规则]
+    B --> B4[编辑器工具链]
+    C[UMoeAssetManager] -->|元梦之星定制| D[短名映射加载体系]
+    D --> D1[ShortName → FullPath 映射]
+    D --> D2[FlatBuffers + MMap 高性能查询]
+    D --> D3[资产加载性能分析]
+    D --> D4[运行时热更/分包支持]
+</pre>
+</div>
+
+<!-- 对比表 -->
+<h2 id="comparison"><span class="h-icon">⚖️</span> UMoeAssetManager vs UAssetManager</h2>
+<p class="desc">全方位对比两者的设计差异。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>维度</th><th><span class="tag tag-ue">UAssetManager（UE4 原生）</span></th><th><span class="tag tag-moe">UMoeAssetManager（元梦定制）</span></th></tr></thead>
+<tbody>
+<tr><td><strong>定位</strong></td><td>通用引擎框架，兼顾编辑器+运行时</td><td>专为手游运行时性能优化</td></tr>
+<tr><td><strong>继承关系</strong></td><td>UObject（全局单例）</td><td>UObject（非单例，由游戏框架管理）</td></tr>
+<tr><td><strong>资产寻址</strong></td><td><code>FPrimaryAssetId</code>（类型+名称）</td><td><strong>短名字符串</strong>（如 <code>"hero_mesh"</code>）</td></tr>
+<tr><td><strong>资产注册</strong></td><td>依赖 <code>AssetRegistry</code> 全量扫描磁盘</td><td>读取轻量级映射文件（txt / FlatBuffers）</td></tr>
+<tr><td><strong>实例模式</strong></td><td>全局单例</td><td>非单例，由游戏框架管理</td></tr>
+<tr><td><strong>热更支持</strong></td><td>不支持运行时动态替换路径</td><td>映射文件可随热更包下发动态替换</td></tr>
+<tr><td><strong>启动速度</strong></td><td>全量扫描拖慢手游启动</td><td>流式读取映射文件，启动极快</td></tr>
+<tr><td><strong>内存占用</strong></td><td><code>AssetRegistry</code> 缓存可达数十 MB</td><td>4KB 分块流式读取，峰值极低</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- 六大核心优势 -->
+<h2 id="advantages"><span class="h-icon">🚀</span> UMoeAssetManager 的六大核心优势</h2>
+<p class="desc">针对手游热更场景的定制化优化。</p>
+
+<div class="grid-2">
+
+<div class="card">
+<h4 style="margin-top:0;">① 短名映射系统 — 业务与路径解耦</h4>
+<p style="color:var(--text-muted); font-size:0.9rem;">业务代码只需使用短名，资产移动/重命名只需更新映射文件，无需改动业务代码。</p>
+<div class="code-block"><span class="lang">C++</span>
+<span class="cm">// 业务代码永远不需要知道完整路径</span>
+<span class="fn">LoadSyncAssetObject</span>&lt;<span class="tp">USkeletalMesh</span>&gt;(<span class="st">"hero_mesh"</span>);</div>
+<ul class="feat" style="margin-top:8px;">
+  <li><span class="ck">✅</span> <span>支持热更 — 映射文件可随热更包下发</span></li>
+  <li><span class="ck">✅</span> <span>支持多包合并 — <code>MergeAssetNameMappingByPathAndKey</code></span></li>
+</ul>
+</div>
+
+<div class="card">
+<h4 style="margin-top:0;">② FlatBuffers + MMap 极致性能</h4>
+<p style="color:var(--text-muted); font-size:0.9rem;">提供三套查询后端，按平台自动选择最优方案：</p>
+<div class="table-wrap" style="margin-top:12px;">
+<table>
+<thead><tr><th>模式</th><th>实现</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td>普通模式</td><td><code>TMap&lt;FString, FString&gt;</code></td><td>通用场景</td></tr>
+<tr><td>Ansi 模式</td><td><code>TMap&lt;FAnsiStringView, ...&gt;</code></td><td>减少 Unicode 内存开销</td></tr>
+<tr><td><strong>FlatBuffers MMap</strong></td><td>内存映射文件 + 加速索引</td><td>iOS/Mac，零拷贝，OS 管理内存</td></tr>
+</tbody>
+</table>
+</div>
+<div class="code-block"><span class="lang">C++</span>
+<span class="cm">// iOS/Mac 默认开启 MMap 模式</span>
+<span class="kw">static</span> <span class="tp">int32</span> GEnableAssetNameMappingMMap = <span class="nb">1</span>; <span class="cm">// iOS/Mac</span>
+<span class="kw">static</span> <span class="tp">int32</span> GEnableAssetNameMappingMMap = <span class="nb">0</span>; <span class="cm">// Android/PC</span></div>
+</div>
+
+<div class="card">
+<h4 style="margin-top:0;">③ 流式读取 — 内存友好</h4>
+<p style="color:var(--text-muted); font-size:0.9rem;">4KB 分块流式读取映射文件，避免大文件一次性加载到内存，将峰值内存压到最低。</p>
+<div class="code-block"><span class="lang">C++</span>
+<span class="kw">constexpr</span> <span class="tp">int32</span> BufferSize = <span class="nb">4</span> * <span class="nb">1024</span>;
+<span class="tp">TArray</span>&lt;<span class="tp">uint8</span>&gt; Buffer;
+Buffer.<span class="fn">SetNumUninitialized</span>(BufferSize);
+<span class="cm">// 逐块读取并解析...</span></div>
+</div>
+
+<div class="card">
+<h4 style="margin-top:0;">④ 内置性能分析埋点</h4>
+<p style="color:var(--text-muted); font-size:0.9rem;">所有同步/异步加载接口都内置了性能采集代理，可实时监控每个资产的加载耗时。</p>
+<div class="code-block"><span class="lang">C++</span>
+<span class="cm">// 每次加载都会广播性能数据</span>
+<span class="kw">if</span>(<span class="tp">UMoeAssetLoadAnalysisSubsystem</span>::
+  OnMoeProfilerCollectAssetLoading.<span class="fn">IsBound</span>())
+  OnMoeProfilerCollectAssetLoading.<span class="fn">Broadcast</span>(
+    StartTime, StartSeconds, {ObjectPath}, <span class="kw">false</span>);</div>
+</div>
+
+<div class="card">
+<h4 style="margin-top:0;">⑤ 线程安全的加载失败上报</h4>
+<p style="color:var(--text-muted); font-size:0.9rem;">配合 Pak 错误事件监听，精准定位线上资产缺失问题。</p>
+<div class="code-block"><span class="lang">C++</span>
+<span class="cm">// 监听 Pak 错误事件，收集失败资产名</span>
+FCoreDelegates::OnAssetLoadingReport.<span class="fn">AddUObject</span>(
+  <span class="kw">this</span>, &amp;<span class="tp">UMoeAssetManager</span>::OnAssetLoadingReport);
+
+<span class="cm">// 线程安全的失败列表</span>
+<span class="kw">static</span> <span class="tp">TArray</span>&lt;<span class="tp">FString</span>&gt; FailedAssetNames;
+<span class="kw">static</span> <span class="tp">FCriticalSection</span> FailedAssetNamesCriticalSection;</div>
+</div>
+
+<div class="card">
+<h4 style="margin-top:0;">⑥ UI 资源专项支持</h4>
+<p style="color:var(--text-muted); font-size:0.9rem;">针对 UI 系统提供颜色表、字体表、DataTable 快捷访问接口，并带有缓存。</p>
+<div class="code-block"><span class="lang">C++</span>
+<span class="tp">FLinearColor</span> <span class="fn">GetUserWidgetColor</span>(<span class="kw">const</span> <span class="tp">FString</span>&amp; ColorName);
+<span class="tp">FSlateFontInfo</span> <span class="fn">GetUserWidgetFont</span>(<span class="kw">const</span> <span class="tp">FString</span>&amp; FontName);
+<span class="tp">UDataTable</span>* <span class="fn">GetUserWidgetTable</span>(<span class="kw">const</span> <span class="tp">FString</span>&amp; Name);</div>
+</div>
+</div>
+
+<!-- 为什么不用 UAssetManager -->
+<h2 id="why-not"><span class="h-icon">❓</span> 为什么不直接用 UAssetManager？</h2>
+<p class="desc">UAssetManager 的设计假设与手游场景存在本质冲突。</p>
+
+<div class="card">
+<h3 style="margin-top:0;">UAssetManager 的设计假设</h3>
+<div class="flow-steps">
+  <div class="flow-step">
+    <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+    <div class="step-body">
+      <div class="step-title">资产在编辑器中被扫描注册</div>
+      <div class="step-desc"><code>ScanPathsForPrimaryAssets</code> 需要 <code>AssetRegistry</code> 全量扫描，手游场景启动慢</div>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+    <div class="step-body">
+      <div class="step-title">资产通过 PrimaryAssetId 寻址</div>
+      <div class="step-desc">要求资产实现 <code>GetPrimaryAssetId()</code> 接口，增加接入成本</div>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+    <div class="step-body">
+      <div class="step-title">Bundle/Chunk 管理面向 PC/主机</div>
+      <div class="step-desc">面向大型 DLC 分包，不适合手游的热更模型</div>
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+    <div class="step-body">
+      <div class="step-title">全局单例模式</div>
+      <div class="step-desc">无法支持多个独立的资产命名空间（不同业务模块的映射文件隔离）</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">元梦之星的核心挑战</h3>
+<div class="grid-2" style="gap:12px;">
+  <div style="background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2); border-radius:10px; padding:14px;">
+    <div style="font-weight:700; color:#fca5a5; margin-bottom:4px;">🔥 热更频繁</div>
+    <p style="color:var(--text-muted); font-size:0.85rem; margin:0;">资产路径随版本变化，需要映射文件动态下发</p>
+  </div>
+  <div style="background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.2); border-radius:10px; padding:14px;">
+    <div style="font-weight:700; color:#fcd34d; margin-bottom:4px;">🧠 内存敏感</div>
+    <p style="color:var(--text-muted); font-size:0.85rem; margin:0;">手机内存有限，AssetRegistry 全量缓存代价太高</p>
+  </div>
+  <div style="background:rgba(168,85,247,0.06); border:1px solid rgba(168,85,247,0.2); border-radius:10px; padding:14px;">
+    <div style="font-weight:700; color:#d8b4fe; margin-bottom:4px;">⚡ 启动性能</div>
+    <p style="color:var(--text-muted); font-size:0.85rem; margin:0;">UAssetManager 的初始扫描在手游上会显著拖慢启动速度</p>
+  </div>
+  <div style="background:rgba(34,197,94,0.06); border:1px solid rgba(34,197,94,0.2); border-radius:10px; padding:14px;">
+    <div style="font-weight:700; color:#86efac; margin-bottom:4px;">📝 短名习惯</div>
+    <p style="color:var(--text-muted); font-size:0.85rem; margin:0;">策划/程序习惯用短名配置资产，而非完整路径</p>
+  </div>
+</div>
+</div>
+
+<div class="callout callout-info">
+  <span class="ico">💡</span>
+  <div><strong>总结：</strong><code>UMoeAssetManager</code> 选择绕过 <code>UAssetManager</code> 的 PrimaryAsset 体系，直接封装 <code>FStreamableManager</code>（<code>UAssetManager</code> 内部也是用它加载的），自建了一套更轻量、更适合手游热更场景的短名映射系统。</div>
+</div>
+
+<div class="footer">
+  <p>LetsGo（元梦之星）资源管理系统 · UMoeAssetManager 深度分析</p>
+  <p style="margin-top:6px; opacity:0.5;">Generated: 2026-03-25</p>
+</div>
+
+</div>
+</div>
+</body>
+</html>

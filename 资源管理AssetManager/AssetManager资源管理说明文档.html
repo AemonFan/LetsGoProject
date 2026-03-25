@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LetsGo 资源管理系统说明文档</title>
+<link rel="stylesheet" href="docs/shared.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true, theme:'dark', fontSize:16, flowchart:{nodeSpacing:30, rankSpacing:50, curve:'basis', useMaxWidth:false}, sequence:{useMaxWidth:false, actorFontSize:15, messageFontSize:14, noteFontSize:14}, themeVariables:{primaryColor:'#6366f1',primaryTextColor:'#f1f5f9',primaryBorderColor:'#818cf8',lineColor:'#64748b',secondaryColor:'#1e293b',tertiaryColor:'#0f172a',fontSize:'16px'}});</script>
+</head>
+<body>
+
+<!-- Mobile Toggle -->
+<button class="sidebar-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open');document.querySelector('.sidebar-overlay').classList.toggle('active');">☰</button>
+<div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('active');"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1><span class="logo">📦</span> 资源管理文档</h1>
+    <div class="subtitle">LetsGo（元梦之星）项目</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-label">概览</div>
+      <a class="nav-item active" href="AssetManager资源管理说明文档.html">
+        <span class="nav-icon">🏠</span><span class="nav-label">首页概览</span>
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">核心模块</div>
+      <a class="nav-item" href="docs/asset-mapping.html">
+        <span class="nav-icon">🗺️</span><span class="nav-label">AssetNameMapping 映射</span>
+      </a>
+      <a class="nav-item" href="docs/umoe-asset-manager.html">
+        <span class="nav-icon">⚙️</span><span class="nav-label">UMoeAssetManager</span>
+      </a>
+      <a class="nav-item" href="docs/chunk-pak.html">
+        <span class="nav-icon">📦</span><span class="nav-label">Chunk 与 .pak 机制</span>
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">扩展知识</div>
+      <a class="nav-item" href="docs/ue4-packaging.html">
+        <span class="nav-icon">🔧</span><span class="nav-label">UE4 资源打包</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<!-- Main Content -->
+<div class="main">
+<div class="main-content">
+
+<!-- Page Hero -->
+<div class="page-hero">
+  <h1>LetsGo <span style="color:var(--accent-light);">资源管理系统</span></h1>
+  <p class="lead">元梦之星项目定制化资源管理方案 —— 基于 UE4 引擎构建的轻量级、高性能资源寻址与生命周期管理系统</p>
+  <div class="badges">
+    <span class="badge"><span class="dot dot-green"></span>短名映射系统</span>
+    <span class="badge"><span class="dot dot-blue"></span>Chunk 分包机制</span>
+    <span class="badge"><span class="dot dot-purple"></span>热更动态替换</span>
+    <span class="badge"><span class="dot dot-orange"></span>性能分析埋点</span>
+  </div>
+</div>
+
+<!-- Architecture Overview -->
+<h2 id="architecture"><span class="h-icon">🏗️</span> 整体架构概览</h2>
+<p class="desc">LetsGo 的资源管理体系由三个层次协同工作，形成完整的资源生命周期管理链路。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+graph TD
+    subgraph "逻辑层 - 资源寻址"
+        A["📄 AssetNameMapping 文件\n短名 → 长路径 映射表"]
+        B["🎮 UMoeAssetManager\n资源加载/卸载封装"]
+    end
+    subgraph "物理层 - 资源分包"
+        C["📦 Chunk（逻辑分包单元）\nChunkId 标识"]
+        D["💾 .pak 文件（物理文件）\nFPakFile"]
+    end
+    subgraph "引擎层 - 底层加载"
+        E["⚙️ FStreamableManager\nUE4 流式加载核心"]
+        F["🌐 FChunkDownloader\n分包下载/挂载"]
+    end
+    A -->|"短名查询 → FSoftObjectPath"| B
+    B -->|"封装调用"| E
+    C -->|"一对多"| D
+    D -->|"Mount 后资源可访问"| E
+    F -->|"管理"| C
+</pre>
+</div>
+
+<div class="callout callout-info">
+  <span class="ico">💡</span>
+  <div><strong>核心设计思路：</strong>绕过 <code>UAssetManager</code> 重量级的 PrimaryAsset 体系，直接封装 <code>FStreamableManager</code>，自建短名映射系统，配合 Chunk 分包机制，实现资源的按需加载、按玩法隔离、支持热更的完整资源管理方案。</div>
+</div>
+
+<!-- Quick Navigation -->
+<h2 id="modules"><span class="h-icon">📑</span> 模块导航</h2>
+<p class="desc">点击卡片进入对应的详细文档页面。</p>
+
+<div class="grid-2">
+  <a href="docs/asset-mapping.html" class="card" style="text-decoration:none; cursor:pointer;">
+    <h4 style="margin-top:0;">🗺️ AssetNameMapping 短名映射系统</h4>
+    <p style="color:var(--text-muted); font-size:0.88rem;">资源名称到引擎路径的映射机制、按玩法 Mount/UnMount、热更动态替换、映射表 vs 资源生命周期对比。</p>
+    <span class="tag tag-moe" style="margin-top:8px;">核心模块</span>
+  </a>
+  <a href="docs/umoe-asset-manager.html" class="card" style="text-decoration:none; cursor:pointer;">
+    <h4 style="margin-top:0;">⚙️ UMoeAssetManager 深度分析</h4>
+    <p style="color:var(--text-muted); font-size:0.88rem;">与 UE4 原生 UAssetManager 的对比、短名映射、FlatBuffers+MMap、性能埋点、失败上报、UI 专项支持。</p>
+    <span class="tag tag-moe" style="margin-top:8px;">核心模块</span>
+  </a>
+  <a href="docs/chunk-pak.html" class="card" style="text-decoration:none; cursor:pointer;">
+    <h4 style="margin-top:0;">📦 Chunk 与 .pak 文件机制</h4>
+    <p style="color:var(--text-muted); font-size:0.88rem;">一对多层级关系、.pak 文件物理结构、挂载触发流程、下载状态持久化、断点续传与并发下载。</p>
+    <span class="tag tag-ue" style="margin-top:8px;">引擎机制</span>
+  </a>
+  <a href="docs/ue4-packaging.html" class="card" style="text-decoration:none; cursor:pointer;">
+    <h4 style="margin-top:0;">🔧 UE4 资源打包流程与 API</h4>
+    <p style="color:var(--text-muted); font-size:0.88rem;">UnrealPak 工具、Cook 系统、着色器变体生成、分包增量更新、压缩优化策略、打包配置管理。</p>
+    <span class="tag tag-ue" style="margin-top:8px;">扩展知识</span>
+  </a>
+</div>
+
+<!-- Resource Lifecycle -->
+<h2 id="lifecycle"><span class="h-icon">🔄</span> 资源完整生命周期</h2>
+<p class="desc">从下载到 GC 回收的七步完整流程。</p>
+
+<div class="card">
+  <h3 style="margin-top:0;">资源分包策略</h3>
+  <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:16px;">元梦之星项目庞大、玩法多样，每个玩法可分为多个资源包，支持按需下载和加载。</p>
+  <div class="grid-2" style="gap:12px;">
+    <div style="background:rgba(34,197,94,0.06); border:1px solid rgba(34,197,94,0.2); border-radius:12px; padding:16px;">
+      <div style="font-weight:700; color:#86efac; margin-bottom:8px;">📱 基础包（小包）</div>
+      <p style="color:var(--text-muted); font-size:0.85rem;">包含核心玩法资源，下载即可开始游戏。如狼人玩法的基础 UI、角色模型、核心逻辑资源。</p>
+    </div>
+    <div style="background:rgba(168,85,247,0.06); border:1px solid rgba(168,85,247,0.2); border-radius:12px; padding:16px;">
+      <div style="font-weight:700; color:#d8b4fe; margin-bottom:8px;">💎 资源包（大包）</div>
+      <p style="color:var(--text-muted); font-size:0.85rem;">包含商业化资源、高清材质、额外皮肤等，需额外下载才能使用。</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">生命周期全链路</h3>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+      <div class="step-body">
+        <div class="step-title">① 下载（DownloadChunks）</div>
+        <div class="step-desc">从 CDN 下载 .pak 文件到本地，支持并发下载、断点续传，以 .pak 文件为最小下载单位</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+      <div class="step-body">
+        <div class="step-title">② 挂载（MountChunks）</div>
+        <div class="step-desc">将 Chunk 对应的 .pak 文件挂载到引擎文件系统，使其中的资源可以被访问</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+      <div class="step-body">
+        <div class="step-title">③ 加载映射表（InitAssetNameMappingByPath）</div>
+        <div class="step-desc">加载对应玩法的 AssetNameMapping 文件，建立短名到长路径的映射关系</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+      <div class="step-body">
+        <div class="step-title">④ 加载资源（LoadSyncAssetObject / RequestAsyncLoad）</div>
+        <div class="step-desc">通过短名查找完整路径，经由 FStreamableManager 加载 UObject 资源到内存</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+      <div class="step-body">
+        <div class="step-title">⑤ 使用资源</div>
+        <div class="step-desc">游戏运行中正常使用已加载的资源</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+      <div class="step-body">
+        <div class="step-title">⑥ 卸载资源 → 清除映射</div>
+        <div class="step-desc">退出玩法时先 UnloadAssetObject() 卸载资源，再 ClearAssetNameMappingByPath() 清除映射表</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="dot-col"><div class="dot"></div><div class="line"></div></div>
+      <div class="step-body">
+        <div class="step-title">⑦ GC 回收</div>
+        <div class="step-desc">引用计数归零后的 UObject 在下次垃圾回收时真正释放内存</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Common Issues -->
+<h2 id="errors"><span class="h-icon">🔍</span> 资源加载失败常见原因</h2>
+<p class="desc">项目中总结的资源加载失败典型场景及解决方案。</p>
+
+<div class="err-card e1">
+  <h4>❌ 原因一：资源本身不存在</h4>
+  <ul>
+    <li>资源未上传至引擎</li>
+    <li>CDN 资源未上传至 CDN 或 CDN 资源路径不正确</li>
+  </ul>
+</div>
+<div class="err-card e2">
+  <h4>🔗 原因二：资源引用丢失</h4>
+  <ul>
+    <li>UI 蓝图中直接引用资源，资源路径改动可能导致资源丢失，需重新引用并编译 UI 蓝图</li>
+    <li>UI 蓝图中引用了其他目录的资源，在手机端分包后，其他目录的资源如果没有加载，则当前引用会丢失</li>
+  </ul>
+</div>
+<div class="err-card e3">
+  <h4>📐 原因三：资源格式不正确</h4>
+  <ul>
+    <li><strong>资源过大</strong> — 如资源最大为 5MB、图片大小不超过 1920×1080</li>
+    <li><strong>资源类型不支持</strong> — 支持动态加载的 UI 资源类型：<code>astc</code> / <code>png</code> / <code>jpg</code> / <code>map</code></li>
+    <li><strong>ASTC 格式约束</strong> — astc 压缩格式的图片宽度和高度必须是块大小的整数倍</li>
+  </ul>
+  <div class="callout callout-warn" style="margin-top:12px; margin-bottom:0;">
+    <span class="ico">📋</span>
+    <div><strong>真实案例：</strong>astc 块大小为 8×8 像素，图片尺寸为 408×420 像素。408 ÷ 8 = 51（✅ 整数），420 ÷ 8 = 52.5（❌ 不是整数）→ 高度不符合要求，图片下载失败。</div>
+  </div>
+</div>
+<div class="err-card e4">
+  <h4>🗺️ 原因四：AssetNameMapping 映射文件相关</h4>
+  <ul>
+    <li>动态加载的资源<strong>必须导出 AssetNameMapping 文件</strong>，否则无法从映射表中找到全路径</li>
+    <li>部分类型的资源需要在 <code>AssetDirectorySetTable_NR3E</code> 表中添加导出路径</li>
+    <li>AssetNameMapping 按玩法需求加载，退出玩法后对应文件会卸载，在此玩法外引用玩法资源会导致加载失败</li>
+  </ul>
+  <div class="callout callout-danger" style="margin-top:12px; margin-bottom:0;">
+    <span class="ico">🎮</span>
+    <div><strong>真实案例：</strong>主玩法需要在祈愿活动中预览狼人的局内道具"会议称号"。会议称号的预览中部分 UI 资源在狼人分包中，局外只有在狼人备战场景才会加载 <code>AssetNameMapping_NR3E.txt</code> 文件，退出后卸载，导致祈愿预览场景无法找到狼人的 UI 资源而报错。</div>
+  </div>
+</div>
+
+<!-- Reference Links -->
+<h2 id="references"><span class="h-icon">📚</span> 参考文档</h2>
+<p class="desc">UE4 官方文档相关链接。</p>
+<div class="grid-2">
+  <a href="https://dev.epicgames.com/documentation/zh-cn/unreal-engine/asset-management?application_version=4.27" target="_blank" class="card" style="text-decoration:none; cursor:pointer;">
+    <h4 style="margin-top:0;">📘 资产管理</h4>
+    <p style="color:var(--text-muted); font-size:0.85rem;">UE4 Asset Management 官方文档</p>
+  </a>
+  <a href="https://dev.epicgames.com/documentation/zh-cn/unreal-engine/preparing-assets-for-chunking?application_version=4.27" target="_blank" class="card" style="text-decoration:none; cursor:pointer;">
+    <h4 style="margin-top:0;">📦 准备资产进行分块</h4>
+    <p style="color:var(--text-muted); font-size:0.85rem;">Preparing Assets for Chunking</p>
+  </a>
+  <a href="https://dev.epicgames.com/documentation/zh-cn/unreal-engine/cooking-and-chunking?application_version=4.27" target="_blank" class="card" style="text-decoration:none; cursor:pointer;">
+    <h4 style="margin-top:0;">🍳 烘焙和数据块划分</h4>
+    <p style="color:var(--text-muted); font-size:0.85rem;">Cooking and Chunking</p>
+  </a>
+  <a href="https://dev.epicgames.com/documentation/zh-cn/unreal-engine/implementing-chunkdownloader-ingame?application_version=4.27" target="_blank" class="card" style="text-decoration:none; cursor:pointer;">
+    <h4 style="margin-top:0;">🌐 ChunkDownloader 实现</h4>
+    <p style="color:var(--text-muted); font-size:0.85rem;">在游戏中实现 ChunkDownloader</p>
+  </a>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <p>LetsGo（元梦之星）资源管理系统说明文档 &nbsp;|&nbsp; 基于项目资料分析总结</p>
+  <p style="margin-top:6px; opacity:0.5;">Generated: 2026-03-25</p>
+</div>
+
+</div>
+</div>
+
+</body>
+</html>

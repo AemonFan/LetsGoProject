@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chunk 与 .pak 文件机制 - LetsGo 资源管理</title>
+<link rel="stylesheet" href="shared.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true, theme:'dark', fontSize:16, flowchart:{nodeSpacing:30, rankSpacing:50, curve:'basis', useMaxWidth:false}, sequence:{useMaxWidth:false, actorFontSize:15, messageFontSize:14, noteFontSize:14}, themeVariables:{primaryColor:'#6366f1',primaryTextColor:'#f1f5f9',primaryBorderColor:'#818cf8',lineColor:'#64748b',secondaryColor:'#1e293b',tertiaryColor:'#0f172a',fontSize:'16px'}});</script>
+</head>
+<body>
+
+<button class="sidebar-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open');document.querySelector('.sidebar-overlay').classList.toggle('active');">☰</button>
+<div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('active');"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1><span class="logo">📦</span> 资源管理文档</h1>
+    <div class="subtitle">LetsGo（元梦之星）项目</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-label">概览</div>
+      <a class="nav-item" href="../AssetManager资源管理说明文档.html">
+        <span class="nav-icon">🏠</span><span class="nav-label">首页概览</span>
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">核心模块</div>
+      <a class="nav-item" href="asset-mapping.html">
+        <span class="nav-icon">🗺️</span><span class="nav-label">AssetNameMapping 映射</span>
+      </a>
+      <a class="nav-item" href="umoe-asset-manager.html">
+        <span class="nav-icon">⚙️</span><span class="nav-label">UMoeAssetManager</span>
+      </a>
+      <a class="nav-item active" href="chunk-pak.html">
+        <span class="nav-icon">📦</span><span class="nav-label">Chunk 与 .pak 机制</span>
+      </a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">扩展知识</div>
+      <a class="nav-item" href="ue4-packaging.html">
+        <span class="nav-icon">🔧</span><span class="nav-label">UE4 资源打包</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<div class="main">
+<div class="main-content">
+
+<div class="page-hero">
+  <h1>📦 Chunk 与 .pak <span style="color:var(--accent-light);">文件机制</span></h1>
+  <p class="lead">Chunk 是逻辑分包单元，.pak 是物理文件单元。两者构成一对多的层级关系，支撑资源的按需下载、挂载和热更。</p>
+  <div class="badges">
+    <span class="badge"><span class="dot dot-green"></span>断点续传</span>
+    <span class="badge"><span class="dot dot-blue"></span>并发下载</span>
+    <span class="badge"><span class="dot dot-purple"></span>异步挂载</span>
+    <span class="badge"><span class="dot dot-orange"></span>状态持久化</span>
+  </div>
+</div>
+<div class="sources">来源：元梦之星项目资源管理经验总结.md、.pak 文件在游戏中的解析与加载流程.md、.pak 资源挂载的完整触发流程.md、Chunk 下载状态的标记与持久化机制.md</div>
+
+<!-- 层级关系 -->
+<h2 id="hierarchy"><span class="h-icon">🗂️</span> 一对多层级关系</h2>
+<p class="desc">一个 Chunk 可以包含多个 .pak 文件。</p>
+
+<div class="card">
+<div class="code-block"><span class="lang">结构</span>
+<span class="tp">Chunk</span>（逻辑单元，ChunkId = 101）
+  ├── <span class="st">PakFile_101_001.pak</span>  <span class="cm">← FPakFile（120MB）</span>
+  ├── <span class="st">PakFile_101_002.pak</span>  <span class="cm">← FPakFile（95MB）</span>
+  └── <span class="st">PakFile_101_003.pak</span>  <span class="cm">← FPakFile（88MB）</span></div>
+</div>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>概念</th><th>类型</th><th>职责</th></tr></thead>
+<tbody>
+<tr><td><strong>Chunk</strong></td><td>逻辑单元（<code>FChunk</code>）</td><td>以 ChunkId 为标识，是游戏逻辑层面的"功能包"，如某个玩法的所有资源集合</td></tr>
+<tr><td><strong>.pak 文件</strong></td><td>物理文件（<code>FPakFile</code>）</td><td>实际存储在磁盘/CDN 上的压缩文件，是下载和挂载的最小物理单元</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">Pak 文件数据结构</h3>
+<div class="code-block"><span class="lang">C++</span>
+<span class="kw">struct</span> <span class="tp">FPakFileEntry</span>
+{
+    <span class="tp">FString</span> FileName;       <span class="cm">// pak 文件名（唯一）</span>
+    <span class="tp">uint64</span>  FileSize = <span class="nb">0</span>;   <span class="cm">// 文件大小（字节）</span>
+    <span class="tp">FString</span> FileVersion;    <span class="cm">// 版本/SHA1 哈希</span>
+    <span class="tp">int32</span>   ChunkId = <span class="nb">-1</span>;  <span class="cm">// 归属的 ChunkId ← 多个 Pak 可以有相同 ChunkId</span>
+    <span class="tp">FString</span> RelativeUrl;    <span class="cm">// CDN 上的相对路径</span>
+};</div>
+</div>
+
+<!-- 操作粒度 -->
+<h3>操作粒度对应关系</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>操作</th><th>粒度</th><th>接口</th></tr></thead>
+<tbody>
+<tr><td><strong>下载 Download</strong></td><td>以 <code>.pak 文件</code> 为单位</td><td><code>DownloadPakFileInternal</code></td></tr>
+<tr><td><strong>挂载 Mount</strong></td><td>以 <code>Chunk</code> 为单位（内部依次挂载所有 .pak）</td><td><code>MountChunkInternal</code></td></tr>
+<tr><td><strong>卸载 Unmount</strong></td><td>以 <code>.pak 文件</code> 为单位</td><td><code>UnmountPakFile</code></td></tr>
+<tr><td><strong>游戏逻辑感知</strong></td><td>以 <code>Chunk</code> 为单位</td><td><code>GetChunkStatus</code>、<code>OnChunkMounted</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- 拆分设计价值 -->
+<h3>拆分为多个 .pak 的设计价值</h3>
+<div class="grid-3">
+  <div class="card" style="text-align:center;">
+    <div style="font-size:2rem; margin-bottom:8px;">🔄</div>
+    <h4 style="text-align:center; margin-top:0;">断点续传</h4>
+    <p style="color:var(--text-muted); font-size:0.85rem;">单个 .pak 下载失败只需重下该文件，不需要重新下载整个 Chunk</p>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div style="font-size:2rem; margin-bottom:8px;">⚡</div>
+    <h4 style="text-align:center; margin-top:0;">并发下载</h4>
+    <p style="color:var(--text-muted); font-size:0.85rem;">同一 Chunk 的多个 .pak 可并行下载，<code>TargetDownloadsInFlight</code> 控制并发数</p>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div style="font-size:2rem; margin-bottom:8px;">🎯</div>
+    <h4 style="text-align:center; margin-top:0;">精细热更</h4>
+    <p style="color:var(--text-muted); font-size:0.85rem;">只有部分资源更新时，只替换对应的 .pak 文件，不重下整个 Chunk</p>
+  </div>
+</div>
+
+<!-- .pak 文件物理结构 -->
+<h2 id="pak-structure"><span class="h-icon">📋</span> .pak 文件物理结构</h2>
+<p class="desc">.pak 文件从末尾开始读取 Footer，再定位到主索引和二级索引。</p>
+
+<div class="card">
+<div class="code-block"><span class="lang">物理结构</span>
+┌─────────────────────────────────────────────────────┐
+│                  资源数据区（Payload）                  │
+│  [File1 Data][File2 Data][File3 Data]...             │
+│  （可压缩：Zlib/Gzip/Oodle，可加密：AES）              │
+├─────────────────────────────────────────────────────┤
+│                  主索引（Primary Index）               │
+│  MountPoint + NumEntries + PathHashSeed              │
+│  + EncodedPakEntries（每个文件的 Offset/Size/Hash）   │
+├─────────────────────────────────────────────────────┤
+│              路径哈希索引（PathHashIndex）              │
+│  FName Hash → FPakEntryLocation（快速查找）            │
+├─────────────────────────────────────────────────────┤
+│            完整目录索引（FullDirectoryIndex）           │
+│  TMap&lt;目录路径, TMap&lt;文件名, FPakEntryLocation&gt;&gt;      │
+├─────────────────────────────────────────────────────┤
+│                  文件尾（Footer / FPakInfo）           │
+│  Magic(4B) + Version(4B) + IndexOffset(8B)          │
+│  + IndexSize(8B) + IndexHash(20B) + EncryptedFlag   │
+│  + EncryptionKeyGuid + CompressionMethods           │
+└─────────────────────────────────────────────────────┘
+                        ↑ 从文件末尾开始读取</div>
+</div>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>索引类型</th><th>数据结构</th><th>内存占用</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>PathHashIndex</code></td><td><code>TMap&lt;uint64 Hash, FPakEntryLocation&gt;</code></td><td>小（仅哈希值）</td><td>运行时快速查找（默认）</td></tr>
+<tr><td><code>FullDirectoryIndex</code></td><td><code>TMap&lt;目录, TMap&lt;文件名, Location&gt;&gt;</code></td><td>大（完整路径字符串）</td><td>目录遍历、编辑器</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- 挂载流程 -->
+<h2 id="mount-flow"><span class="h-icon">🔌</span> .pak 资源挂载完整触发流程</h2>
+<p class="desc">整个挂载过程分为 5 个阶段，跨越 ChunkDownloader → FCoreDelegates → FPakPlatformFile 三个模块。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    participant Game as 游戏逻辑层
+    participant CD as FChunkDownloader
+    participant MT as FPakMountWork（异步线程）
+    participant PPF as FPakPlatformFile
+    participant PakFile as FPakFile
+
+    Game->>CD: MountChunk(ChunkId, Callback)
+    CD->>CD: 检查 Chunk.bIsMounted?
+    alt 已挂载
+        CD-->>Game: ExecuteNextTick(Callback, true)
+    else 未挂载 且 已缓存
+        CD->>MT: 创建 FMountTask → StartBackgroundTask()
+        MT->>MT: 遍历 PakFiles，计算 PakReadOrder
+        MT->>PPF: FCoreDelegates::OnMountPak.Execute()
+        PPF->>PakFile: new FPakFile → 解析 Footer+Index
+        PPF->>PPF: PakFiles.Add → 加入已挂载列表
+        MT-->>CD: CompleteMountTask() → bIsMounted=true
+        CD-->>Game: Callback(true)
+    else 未缓存
+        CD->>CD: DownloadChunkInternal → 下载完成后重新 MountChunk
+    end
+</pre>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">阶段一：MountChunk — 入口判断（主线程）</h3>
+<div class="code-block"><span class="lang">C++</span>
+<span class="kw">void</span> <span class="tp">FChunkDownloader</span>::<span class="fn">MountChunk</span>(<span class="tp">int32</span> ChunkId, <span class="kw">const</span> <span class="tp">FCallback</span>&amp; Callback)
+{
+    <span class="tp">TSharedRef</span>&lt;<span class="tp">FChunk</span>&gt;* ChunkPtr = Chunks.<span class="fn">Find</span>(ChunkId);
+    <span class="kw">if</span> (Chunk.bIsMounted)
+    {
+        <span class="fn">ExecuteNextTick</span>(Callback, <span class="kw">true</span>);  <span class="cm">// 已挂载，直接回调</span>
+        <span class="kw">return</span>;
+    }
+    <span class="fn">MountChunkInternal</span>(Chunk, Callback); <span class="cm">// 进入挂载流程</span>
+}</div>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">阶段二：MountChunkInternal — 决策分支</h3>
+<p style="color:var(--text-muted); font-size:0.9rem;">路径A：所有 pak 已缓存 → 直接启动异步挂载任务<br>路径B：有 pak 未缓存 → 先下载，下载完成后再触发挂载</p>
+<div class="code-block"><span class="lang">C++</span>
+<span class="cm">// 创建异步任务</span>
+Chunk.MountTask = <span class="kw">new</span> <span class="tp">FMountTask</span>();
+<span class="tp">FPakMountWork</span>&amp; MountWork = Chunk.MountTask-><span class="fn">GetTask</span>();
+MountWork.CacheFolder = CacheFolder;
+<span class="kw">for</span> (<span class="kw">const</span> <span class="tp">TSharedRef</span>&lt;<span class="tp">FPakFile</span>&gt;&amp; PakFile : Chunk.PakFiles)
+{
+    <span class="kw">if</span> (!PakFile->bIsMounted)
+        MountWork.PakFiles.<span class="fn">Add</span>(PakFile);
+}
+Chunk.MountTask-><span class="fn">StartBackgroundTask</span>();  <span class="cm">// 启动异步线程</span></div>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">阶段三：FPakMountWork::DoWork — 实际挂载（异步线程）</h3>
+<div class="code-block"><span class="lang">C++</span>
+<span class="kw">void</span> <span class="fn">DoWork</span>()
+{
+    <span class="tp">uint32</span> PakReadOrder = PakFiles.<span class="fn">Num</span>();
+    <span class="kw">for</span> (<span class="kw">const</span> <span class="tp">TSharedRef</span>&lt;<span class="tp">FPakFile</span>&gt;&amp; PakFile : PakFiles)
+    {
+        <span class="tp">FString</span> FullPathOnDisk = CacheFolder / PakFile->Entry.FileName;
+        <span class="cm">// 通过委托触发实际挂载</span>
+        <span class="tp">bool</span> bMountOk = FCoreDelegates::OnMountPak.<span class="fn">Execute</span>(
+            FullPathOnDisk, PakReadOrder, <span class="kw">nullptr</span>);
+        <span class="kw">if</span> (bMountOk) --PakReadOrder;
+    }
+}</div>
+<div class="callout callout-info" style="margin-bottom:0;">
+  <span class="ico">💡</span>
+  <div><strong>关键设计：</strong><code>PakReadOrder</code> 从 <code>PakFiles.Num()</code> 开始递减，确保 Chunk 内的 pak 文件按顺序优先级挂载。</div>
+</div>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">阶段四：FPakPlatformFile::Mount — 底层挂载</h3>
+<div class="code-block"><span class="lang">C++</span>
+<span class="kw">bool</span> <span class="tp">FPakPlatformFile</span>::<span class="fn">Mount</span>(<span class="kw">const</span> <span class="tp">TCHAR</span>* InPakFilename, <span class="tp">uint32</span> PakOrder, ...)
+{
+    <span class="cm">// 1. 打开文件句柄</span>
+    <span class="tp">TSharedPtr</span>&lt;<span class="tp">IFileHandle</span>&gt; PakHandle = LowerLevel-><span class="fn">OpenRead</span>(InPakFilename);
+    <span class="cm">// 2. 解析 pak 文件（读取 Footer + Index）</span>
+    <span class="tp">FPakFileThreadSafePtr</span> Pak = <span class="fn">MakeShared</span>&lt;<span class="tp">FPakFile</span>&gt;(LowerLevel, InPakFilename, ...);
+    <span class="kw">if</span> (Pak-><span class="fn">IsValid</span>())
+    {
+        <span class="cm">// 3. 加入已挂载列表（线程安全）</span>
+        <span class="tp">FScopeLock</span> ScopedLock(&amp;PakListCritical);
+        PakFiles.<span class="fn">Add</span>(Entry);
+        PakFiles.<span class="fn">StableSort</span>();  <span class="cm">// 按优先级排序</span>
+        <span class="cm">// 4. 广播挂载完成通知</span>
+        FCoreDelegates::OnPakFileMounted2.<span class="fn">Broadcast</span>(*Pak);
+    }
+}</div>
+</div>
+
+<!-- 运行时资源读取 -->
+<h2 id="runtime-read"><span class="h-icon">📖</span> 运行时资源读取流程</h2>
+<p class="desc">当 FStreamableManager 请求加载某个资源时，最终调用到 FPakPlatformFile::OpenRead。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+graph TD
+    A["FStreamableManager::RequestSyncLoad"] --> B["UPackage::LoadPackage()"]
+    B --> C["FLinkerLoad::CreateLoader()"]
+    C --> D["FPakPlatformFile::OpenRead()"]
+    D --> E["FindFileInPakFiles()"]
+    E --> F{"CompressionMethod?"}
+    F -->|"压缩+加密"| G["FPakFileHandle 解密+解压"]
+    F -->|"仅压缩"| H["FPakFileHandle 仅解压"]
+    F -->|"原始数据"| I["FPakFileHandle 直接读取"]
+</pre>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">FindFileInPakFiles 查找过程</h3>
+<div class="code-block"><span class="lang">C++</span>
+<span class="cm">// 遍历所有已挂载的 pak（按 ReadOrder 排序，高优先级先查）</span>
+<span class="kw">for</span> (<span class="tp">FPakListEntry</span>&amp; Entry : PakFiles)
+{
+    <span class="cm">// 用 PathHashIndex 快速查找（O(1) 哈希查找）</span>
+    <span class="kw">const</span> <span class="tp">FPakEntryLocation</span>* Location = Entry.PakFile-><span class="fn">FindPrunedFileInIndex</span>(Filename);
+    <span class="kw">if</span> (Location)
+    {
+        <span class="cm">// 解码 EncodedPakEntries 得到 FPakEntry（含 Offset/Size/Hash）</span>
+        OutEntry = <span class="fn">DecodeEntry</span>(*Location);
+        <span class="kw">return</span> <span class="kw">true</span>;
+    }
+}</div>
+</div>
+
+<!-- Chunk 下载状态持久化 -->
+<h2 id="persistence"><span class="h-icon">💾</span> Chunk 下载状态的标记与持久化</h2>
+<p class="desc">核心设计：内存状态是运行时的，持久化状态靠磁盘上的 LocalManifest.txt 文件。</p>
+
+<div class="card">
+<h3 style="margin-top:0;">运行时内存状态</h3>
+<div class="code-block"><span class="lang">C++</span>
+<span class="kw">struct</span> <span class="tp">FPakFile</span>
+{
+    <span class="tp">FPakFileEntry</span> Entry;      <span class="cm">// 元数据（FileName, FileSize, ChunkId...）</span>
+    <span class="tp">bool</span> bIsCached = <span class="kw">false</span>;   <span class="cm">// ✅ pak 是否已完整下载到磁盘</span>
+    <span class="tp">bool</span> bIsMounted = <span class="kw">false</span>;  <span class="cm">// ✅ pak 是否已挂载到内存文件系统</span>
+    <span class="tp">bool</span> bIsEmbedded = <span class="kw">false</span>; <span class="cm">// 是否是随包内置的 pak</span>
+    <span class="tp">uint64</span> SizeOnDisk = <span class="nb">0</span>;    <span class="cm">// 磁盘上的实际文件大小</span>
+};</div>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">LocalManifest.txt 持久化文件</h3>
+<p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:12px;">存储路径：<code>FPaths::ProjectPersistentDownloadDir() / "PakCache/LocalManifest.txt"</code></p>
+<div class="code-block"><span class="lang">文件格式（Tab 分隔）</span>
+$NUM_ENTRIES = 3
+GameplayA_001.pak	102400	v1.4.22-r23928	-1	/
+GameplayA_002.pak	204800	v1.4.22-r23928	-1	/
+GameplayB_001.pak	512000	v1.4.22-r23928	-1	/</div>
+</div>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+sequenceDiagram
+    participant Game as 游戏启动
+    participant CD as FChunkDownloader::Initialize()
+    participant Disk as 磁盘文件系统
+    participant Mem as 内存 PakFiles Map
+
+    Game->>CD: Initialize()
+    CD->>Disk: 读取 PakCache/LocalManifest.txt
+    CD->>Disk: FileManager.FileSize(CacheFolder / Entry.FileName)
+    alt 文件存在 且 大小 == Entry.FileSize
+        CD->>Mem: bIsCached = true ✅
+    else 文件存在 但 大小 < Entry.FileSize
+        CD->>Mem: SizeOnDisk = 实际大小（部分下载）
+    else 文件不存在
+        CD->>Mem: 从 LocalManifest 移除
+    end
+    CD->>Disk: SaveLocalManifest() 清理无效条目
+</pre>
+</div>
+
+<!-- Chunk 状态机 -->
+<h2 id="chunk-status"><span class="h-icon">📊</span> Chunk 状态生命周期</h2>
+<p class="desc">GetChunkStatus 通过遍历 Chunk 下的 PakFiles 计算整体状态。</p>
+
+<div class="mermaid-wrap">
+<pre class="mermaid">
+graph TD
+    A["GetChunkStatus(ChunkId)"] --> B{"Chunk.bIsMounted?"}
+    B -->|Yes| C["Mounted（已挂载到内存）"]
+    B -->|No| D["统计 NumCached / NumDownloading"]
+    D --> E{"NumCached >= NumPaks?"}
+    E -->|Yes| F["Cached（全部下载完成，未挂载）"]
+    E -->|No| G{"NumCached + NumDownloading >= NumPaks?"}
+    G -->|Yes| H["Downloading（下载中）"]
+    G -->|No| I{"NumCached + NumDownloading > 0?"}
+    I -->|Yes| J["Partial（部分下载，已暂停）"]
+    I -->|No| K["Remote（未开始下载）"]
+</pre>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">状态生命周期总结</h3>
+<div class="code-block"><span class="lang">状态流转</span>
+<span class="st">首次下载：</span>
+Remote → (DownloadChunk) → Downloading → (下载完成) → Cached → (MountChunk) → Mounted
+
+<span class="st">游戏重启后：</span>
+磁盘有完整 pak → Initialize() → bIsCached=true → Cached（无需重新下载）
+磁盘有部分 pak → Initialize() → SizeOnDisk>0, bIsCached=false → Partial（支持断点续传）
+磁盘无 pak 文件 → LocalManifest 条目被清除 → Remote（需要重新下载）</div>
+
+<div class="callout callout-info" style="margin-bottom:0;">
+  <span class="ico">💡</span>
+  <div><strong>关键结论：</strong><code>bIsMounted</code> 是纯内存状态，游戏重启后永远从 <code>false</code> 开始，必须重新调用 <code>MountChunk</code>。而 <code>bIsCached</code> 通过 <code>LocalManifest.txt</code> + 磁盘文件大小校验来恢复，这就是已下载的玩法资源在重启后不需要重新下载的原因。</div>
+</div>
+</div>
+
+<!-- 元梦定制扩展 -->
+<h2 id="customization"><span class="h-icon">🎮</span> 元梦之星的定制扩展</h2>
+<p class="desc">在标准 UE4 pak 格式上做了安全性增强。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>定制点</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>PakFile_Version_ZplanCustom (v12)</code></td><td>在 Footer 中增加了 <code>FZplanEngineVersion</code>，用于引擎版本兼容性校验，防止旧版本 pak 被新引擎错误加载</td></tr>
+<tr><td><code>PakFile_Version_ZplanEncrypted (v13)</code></td><td>在 <code>FPakEntry</code> 的 Offset 字段位置插入随机数混淆（<code>PakEntry_Magic = 0x709665BA</code>），增加逆向难度</td></tr>
+<tr><td><code>OutErrorCode</code> 参数</td><td>在 Mount/LoadIndex 全链路增加了精细化错误码（<code>EPME_FailurePakIntegrityError</code> 等），方便线上问题定位</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- 关键设计总结 -->
+<h2 id="summary"><span class="h-icon">📝</span> 关键设计总结</h2>
+<p class="desc">挂载流程中的核心设计决策。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>设计点</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><strong>委托解耦</strong></td><td>ChunkDownloader 通过 <code>FCoreDelegates::OnMountPak</code> 委托调用挂载，不直接依赖 FPakPlatformFile</td></tr>
+<tr><td><strong>异步挂载</strong></td><td><code>FPakMountWork</code> 在后台线程执行，避免阻塞游戏主线程</td></tr>
+<tr><td><strong>Ticker 轮询</strong></td><td>主线程通过每帧 Ticker 检测异步任务完成，保证回调在主线程执行</td></tr>
+<tr><td><strong>顺序优先级</strong></td><td><code>PakReadOrder</code> 递减确保同一 Chunk 内 pak 文件按正确顺序覆盖</td></tr>
+<tr><td><strong>加密延迟挂载</strong></td><td>若加密 Key 未就绪，pak 进入 PendingEncryptedPakFiles 队列，Key 注册后自动补挂</td></tr>
+<tr><td><strong>下载→挂载串联</strong></td><td>未缓存时先下载，下载完成回调中再次调用 MountChunk，形成完整链路</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="footer">
+  <p>LetsGo（元梦之星）资源管理系统 · Chunk 与 .pak 文件机制</p>
+  <p style="margin-top:6px; opacity:0.5;">Generated: 2026-03-25</p>
+</div>
+
+</div>
+</div>
+</body>
+</html>
