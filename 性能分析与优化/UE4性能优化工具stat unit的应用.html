@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UE4 stat unit 的应用</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; line-height: 1.8; color: #2c3e50; background: #f8f9fa; padding: 40px; }
+.container { max-width: 960px; margin: 0 auto; background: #fff; padding: 48px 56px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+h1 { font-size: 2em; color: #1a1a2e; border-bottom: 3px solid #3498db; padding-bottom: 12px; margin-bottom: 32px; }
+h2 { font-size: 1.5em; color: #2c3e50; margin-top: 36px; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #3498db; }
+h3 { font-size: 1.2em; color: #34495e; margin-top: 24px; margin-bottom: 12px; }
+h4 { font-size: 1.05em; color: #555; margin-top: 16px; margin-bottom: 8px; }
+p { margin-bottom: 12px; }
+table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.95em; }
+th, td { border: 1px solid #dee2e6; padding: 10px 14px; text-align: left; }
+th { background: #3498db; color: white; font-weight: 600; }
+tr:nth-child(even) { background: #f8f9fa; }
+tr:hover { background: #e8f4f8; }
+code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-family: Consolas, Monaco, monospace; font-size: 0.9em; color: #e74c3c; }
+pre { background: #1e1e2e; color: #cdd6f4; padding: 20px; border-radius: 8px; overflow-x: auto; margin: 16px 0; font-size: 0.9em; line-height: 1.6; }
+pre code { background: none; color: inherit; padding: 0; }
+blockquote { border-left: 4px solid #3498db; padding: 12px 20px; margin: 16px 0; background: #ebf5fb; border-radius: 0 8px 8px 0; }
+ul, ol { margin: 12px 0; padding-left: 28px; }
+li { margin-bottom: 6px; }
+hr { border: none; border-top: 2px solid #ecf0f1; margin: 32px 0; }
+.tip { background: #d4edda; border-left: 4px solid #28a745; padding: 12px 20px; margin: 16px 0; border-radius: 0 8px 8px 0; }
+.warn { background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 20px; margin: 16px 0; border-radius: 0 8px 8px 0; }
+.flow-box { background: #f0f7ff; border: 2px dashed #3498db; border-radius: 8px; padding: 24px; margin: 16px 0; }
+.flow-box pre { background: #fff; color: #333; border: 1px solid #dee2e6; }
+.footer { text-align: center; color: #999; margin-top: 32px; padding-top: 16px; border-top: 1px solid #ecf0f1; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>UE4 性能优化工具 stat unit 的应用</h1>
+<h2>1. stat unit 工具使用说明</h2>
+<h3>1.1 如何启用</h3>
+<p>在游戏运行时打开控制台输入：</p>
+<pre><code>stat unit</code></pre>
+<h3>1.2 显示指标说明</h3>
+<table><thead><tr><th>指标</th><th>含义</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><strong>Frame</strong></td><td>总帧时间</td><td>当前帧总耗时（ms）</td></tr>
+<tr><td><strong>Game</strong></td><td>Game Thread</td><td>游戏逻辑线程耗时</td></tr>
+<tr><td><strong>Draw</strong></td><td>Render Thread</td><td>渲染线程耗时</td></tr>
+<tr><td><strong>GPU</strong></td><td>GPU 耗时</td><td>GPU 渲染耗时</td></tr>
+<tr><td><strong>RHIT</strong></td><td>RHI Thread</td><td>渲染硬件接口线程</td></tr>
+<tr><td><strong>DynRes</strong></td><td>动态分辨率</td><td>动态分辨率百分比</td></tr>
+</tbody></table>
+<blockquote>FPS ≈ 1000 / Frame(ms)</blockquote>
+<h3>1.3 如何判断瓶颈</h3>
+<div class="warn"><strong>判断规则：</strong><ol>
+<li><strong>Frame ≈ Game &gt; Draw, GPU</strong> → Game Thread 瓶颈</li>
+<li><strong>Frame ≈ Draw &gt; Game, GPU</strong> → Render Thread 瓶颈</li>
+<li><strong>Frame ≈ GPU &gt; Game, Draw</strong> → GPU 瓶颈</li>
+<li><strong>Frame 远大于三者最大值</strong> → 线程同步/IO/VSync</li>
+</ol></div>
+<blockquote>Frame ≈ max(Game, Draw, GPU)，而非三者之和。</blockquote>
+<h3>1.4 使用示例</h3>
+<pre><code>// 场景1: Game Thread 瓶颈
+Frame: 45.2ms  Game: 42.1ms  Draw: 8.3ms  GPU: 12.5ms → stat game
+
+// 场景2: Render Thread 瓶颈
+Frame: 38.5ms  Game: 6.2ms  Draw: 35.1ms  GPU: 15.3ms → stat scenerendering
+
+// 场景3: GPU 瓶颈
+Frame: 50.0ms  Game: 8.1ms  Draw: 7.5ms  GPU: 48.3ms → profilegpu</code></pre>
+<h3>1.5 stat unitgraph</h3>
+<table><thead><tr><th>颜色</th><th>含义</th></tr></thead><tbody>
+<tr><td style="color:green">🟢 绿色</td><td>Game Thread</td></tr>
+<tr><td style="color:blue">🔵 蓝色</td><td>Render Thread</td></tr>
+<tr><td style="color:red">🔴 红色</td><td>GPU</td></tr>
+</tbody></table>
+<h3>1.6 搭配命令</h3>
+<table><thead><tr><th>命令</th><th>作用</th><th>场景</th></tr></thead><tbody>
+<tr><td><code>stat fps</code></td><td>帧率</td><td>快速查看</td></tr>
+<tr><td><code>stat game</code></td><td>Game Thread</td><td>Game 瓶颈</td></tr>
+<tr><td><code>stat scenerendering</code></td><td>渲染各阶段</td><td>Draw 瓶颈</td></tr>
+<tr><td><code>stat rhi</code></td><td>RHI 统计</td><td>Draw Call</td></tr>
+<tr><td><code>profilegpu</code></td><td>GPU Pass</td><td>GPU 瓶颈</td></tr>
+</tbody></table>
+<h3>1.7 注意事项</h3>
+<div class="warn"><ol>
+<li>编辑器下数据包含编辑器开销，真机更准确</li>
+<li>建议 Development 构建下分析</li>
+<li>VSync 可能掩盖真实性能</li>
+<li>Frame ≈ max(Game, Draw, GPU)</li>
+</ol></div><hr>
+<h2>2. 实战案例</h2>
+<h3>2.1 LetsGo 大厅 GPU 瓶颈</h3>
+<table><thead><tr><th>指标</th><th>数值</th></tr></thead><tbody>
+<tr><td>Frame</td><td>18.07 ms</td></tr><tr><td>Game</td><td>16.47 ms</td></tr>
+<tr><td>Draw</td><td>0.30 ms</td></tr><tr><td>GPU</td><td>18.02 ms</td></tr>
+</tbody></table>
+<div class="tip"><strong>结论：GPU 是主要瓶颈</strong>（18.02ms ≈ Frame 18.07ms）</div>
+<h3>2.2 GPU 排查工具</h3>
+<table><thead><tr><th>工具</th><th>作用</th></tr></thead><tbody>
+<tr><td><code>profilegpu</code></td><td>GPU Pass 耗时分解</td></tr>
+<tr><td><code>stat scenerendering</code></td><td>渲染阶段数据</td></tr>
+<tr><td><code>stat rhi</code></td><td>Draw Call/三角面数</td></tr>
+<tr><td>Shader Complexity</td><td>着色器复杂度</td></tr>
+<tr><td>RenderDoc</td><td>逐 Draw Call</td></tr>
+</tbody></table><hr>
+<h2>3. ProfileGPU 使用</h2>
+<p><code>profilegpu</code> 是<strong>单帧快照</strong>，不实时。</p>
+<div class="warn"><ul>
+<li>MobileSceneRender 耗时最高是正常现象</li>
+<li>需展开子项查看具体阶段</li>
+<li>总耗时与 stat unit 差距大说明没抓到卡顿帧</li>
+</ul></div><hr>
+<h2>4. 短暂卡顿捕捉</h2>
+<h3>方案一：Unreal Insights</h3>
+<pre><code>-trace=gpu,cpu,frame,bookmark -statnamedevents</code></pre>
+<h3>方案二：stat startfile/stopfile</h3>
+<pre><code>stat startfile → 经过卡顿 → stat stopfile</code></pre>
+<h3>方案三：绑定快捷键</h3>
+<pre><code>setbind F9 profilegpu</code></pre>
+<h3>方案四：暂停后抓取</h3><p>Pause → profilegpu</p>
+<h3>方案五：RenderDoc</h3><p>F12 抓帧</p>
+<table><thead><tr><th>场景</th><th>推荐</th></tr></thead><tbody>
+<tr><td>全面分析</td><td>Unreal Insights</td></tr>
+<tr><td>快速定位</td><td>stat startfile/stopfile</td></tr>
+<tr><td>瞬间 GPU</td><td>快捷键 + profilegpu</td></tr>
+<tr><td>深入 Draw Call</td><td>RenderDoc</td></tr>
+</tbody></table><hr>
+<h2>5. Profiler 分析实战</h2>
+<div class="tip"><strong>FQueuedThread::Run.WaitForWork 不是瓶颈！</strong><br>线程空闲等待，其他地方卡住导致整帧拉长。</div>
+<h3>正确排查</h3>
+<table><thead><tr><th>指标</th><th>含义</th></tr></thead><tbody>
+<tr><td>FrameTime</td><td>游戏线程单帧耗时</td></tr>
+<tr><td>Blueprint Time</td><td>蓝图/Lua 耗时</td></tr>
+<tr><td>Slate Tick Time</td><td>UI 耗时</td></tr>
+</tbody></table><hr>
+<h2>6. GameThread 深度分析</h2>
+<pre><code>GameThread
+└── FrameTime ~775ms
+    └── World Tick Time ~774ms
+        └── LetsGoGameInstance.ReceiveTick ~771ms
+            └── LuaGameSE ~229ms
+                ├── SendMessageToApp ~129ms ⭐
+                │   └── AsyncProtoMessage ~86ms
+                ├── CollectPisLogOutput ~42ms ⭐
+                ├── CollectXULogOutput ~64ms ⭐
+                ├── ExecOnSDKMessage ~19ms
+                └── LuaAllocator ~0.05ms</code></pre>
+<h3>瓶颈排名</h3>
+<table><thead><tr><th>排名</th><th>函数</th><th>耗时</th><th>优先级</th></tr></thead><tbody>
+<tr><td>🥇</td><td>SendMessageToApp</td><td>~129ms</td><td><strong>高</strong></td></tr>
+<tr><td>🥈</td><td>CollectPis/XULogOutput</td><td>~106ms</td><td><strong>高</strong></td></tr>
+<tr><td>🥉</td><td>OnSDKMessage</td><td>~19ms</td><td>中</td></tr>
+<tr><td>4</td><td>FMsgLog</td><td>~12+ms</td><td>低</td></tr>
+</tbody></table>
+<h3>优化建议</h3>
+<div class="tip"><ol>
+<li>排查 SendMessageToApp 调用频率，合并消息</li>
+<li>Release 环境关闭日志</li>
+<li>检查 ReceiveTick 不必要逻辑</li>
+<li>利用 UpdatePixUITickIntervalSec</li>
+</ol></div>
+<h3>关键代码</h3>
+<pre><code>function PandoraManager:SendMessageToApp(appId, msg)
+    if appId == nil then return -1 end
+    if type(appId) == "number" then appId = tostring(appId) end
+    appId = self.AppId:Trans2EditorAppId(appId)
+    local result = UE4.UMoeGameletManager.SendMessageToApp(appId, msg)
+    return result
+end
+
+function PandoraManager:UpdatePixUITickIntervalSec(intervalSec)
+    if m_pixui_tick_interval == intervalSec then return end
+    m_pixui_tick_interval = intervalSec
+    UE4.UMoeGameletManager.SetTickIntervalSec(intervalSec)
+end</code></pre><hr>
+<h2>7. 工具速查表</h2>
+<table><thead><tr><th>工具</th><th>类型</th><th>用途</th><th>实时</th></tr></thead><tbody>
+<tr><td><code>stat unit</code></td><td>控制台</td><td>帧耗时概览</td><td>✅</td></tr>
+<tr><td><code>stat unitgraph</code></td><td>控制台</td><td>折线图</td><td>✅</td></tr>
+<tr><td><code>stat game</code></td><td>控制台</td><td>Game Thread</td><td>✅</td></tr>
+<tr><td><code>profilegpu</code></td><td>控制台</td><td>GPU Pass</td><td>❌</td></tr>
+<tr><td><code>stat startfile</code></td><td>控制台</td><td>录制</td><td>❌</td></tr>
+<tr><td>Profiler</td><td>编辑器</td><td>.ue4stats</td><td>❌</td></tr>
+<tr><td>Unreal Insights</td><td>独立</td><td>全量分析</td><td>❌</td></tr>
+<tr><td>RenderDoc</td><td>外部</td><td>GPU 分析</td><td>❌</td></tr>
+</tbody></table><hr>
+<h2>8. 推荐工作流</h2>
+<div class="flow-box"><pre><code>stat unit → 定位瓶颈
+├── Game → stat game / Profiler
+├── Render → stat scenerendering
+└── GPU → profilegpu / RenderDoc
+→ 优化 → 验证</code></pre></div>
+<div class="flow-box"><pre><code>stat startfile → 卡顿 → stat stopfile
+→ Profiler → 定位峰值 → 忽略 WaitForWork</code></pre></div>
+<div class="footer"><p>2026-03-25 | LetsGo (UE4)</p></div>
+</div>
+</body>
+</html>
