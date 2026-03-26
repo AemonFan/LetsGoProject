@@ -40,14 +40,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
     </div>
     <nav class="sidebar-nav">
         <div class="nav-section-title">📁 文档列表</div>
-        <button class="nav-btn active" onclick="loadPage('welcome',this)">
-            <span class="icon">🏠</span><span class="label">首页</span>
-        </button>
         <button class="nav-btn" onclick="loadPage('UE4性能优化工具汇总.html',this)">
             <span class="icon">📋</span><span class="label">UE4 性能优化工具汇总</span><span class="badge">8类工具</span>
         </button>
         <button class="nav-btn" onclick="loadPage('UE4性能优化工具stat unit的应用.html',this)">
             <span class="icon">🔍</span><span class="label">stat unit 的应用</span><span class="badge">实战案例</span>
+        </button>
+        <button class="nav-btn" onclick="loadPage('UE4性能优化工具Unreal Insights的应用.html',this)">
+            <span class="icon">📈</span><span class="label">Unreal Insights 的应用</span><span class="badge">官方主推</span>
         </button>
     </nav>
     <div class="sidebar-footer">
@@ -62,12 +62,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
     <div class="welcome" id="wp">
         <div class="emoji">🎮</div>
         <h2>UE4 性能分析与优化文档中心</h2>
-        <p>点击左侧导航栏选择要查看的文档。<br>本文档中心包含 UE4 性能优化工具总览和 stat unit 实战应用两篇文档。</p>
+        <p>点击左侧导航栏选择要查看的文档。<br>本文档中心包含 UE4 性能优化工具总览、stat unit 实战应用和 Unreal Insights 应用三篇文档。</p>
     </div>
     <iframe class="content-frame" id="cf" style="display:none;"></iframe>
 </div>
 <script>
-var T={'welcome':'首页','UE4性能优化工具汇总.html':'UE4 性能优化工具汇总','UE4性能优化工具stat unit的应用.html':'stat unit 的应用'};
+var T={'welcome':'首页','UE4性能优化工具汇总.html':'UE4 性能优化工具汇总','UE4性能优化工具stat unit的应用.html':'stat unit 的应用','UE4性能优化工具Unreal Insights的应用.html':'Unreal Insights 的应用'};
 function loadPage(p,b){
     document.querySelectorAll('.nav-btn').forEach(function(x){x.classList.remove('active')});
     b.classList.add('active');

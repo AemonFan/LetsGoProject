@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UE4 性能优化工具 Unreal Insights 的应用</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft YaHei", sans-serif; line-height: 1.8; color: #2c3e50; background-color: #f5f7fa; }
+        .container { max-width: 960px; margin: 0 auto; padding: 40px 30px; }
+        h1 { font-size: 2em; color: #1a1a2e; text-align: center; margin-bottom: 10px; padding-bottom: 15px; border-bottom: 3px solid #3498db; }
+        .ref-link { text-align: center; margin-bottom: 40px; font-size: 0.9em; color: #7f8c8d; }
+        .ref-link a { color: #3498db; text-decoration: none; }
+        .ref-link a:hover { text-decoration: underline; }
+        h2 { font-size: 1.5em; color: #2c3e50; margin-top: 50px; margin-bottom: 20px; padding-left: 12px; border-left: 4px solid #3498db; }
+        h3 { font-size: 1.2em; color: #34495e; margin-top: 30px; margin-bottom: 12px; }
+        h4 { font-size: 1.05em; color: #555; margin-top: 20px; margin-bottom: 10px; }
+        p { margin-bottom: 12px; }
+        hr { border: none; border-top: 1px solid #dce1e6; margin: 40px 0; }
+        .intro-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 25px 30px; border-radius: 10px; margin-bottom: 30px; }
+        .intro-box strong { color: #ffd700; }
+        blockquote { background-color: #eef6ff; border-left: 4px solid #3498db; padding: 12px 20px; margin: 15px 0; border-radius: 0 6px 6px 0; color: #2c3e50; }
+        ol, ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        code { background-color: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: "Fira Code", "Consolas", "Monaco", monospace; font-size: 0.9em; color: #e74c3c; }
+        pre { background-color: #282c34; color: #abb2bf; padding: 18px 22px; border-radius: 8px; overflow-x: auto; margin: 12px 0 18px 0; font-family: "Fira Code", "Consolas", "Monaco", monospace; font-size: 0.9em; line-height: 1.6; }
+        pre code { background: none; color: inherit; padding: 0; }
+        .comment { color: #5c6370; font-style: italic; }
+        .macro { color: #e5c07b; }
+        .function { color: #61afef; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0 20px 0; font-size: 0.95em; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        thead { background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; }
+        th { padding: 12px 15px; text-align: left; font-weight: 600; }
+        td { padding: 10px 15px; border-bottom: 1px solid #ecf0f1; }
+        tbody tr:nth-child(even) { background-color: #f8f9fa; }
+        tbody tr:hover { background-color: #eef6ff; }
+        .workflow { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 30px 0; flex-wrap: wrap; gap: 10px; }
+        .workflow-step { flex: 1; min-width: 180px; background: #fff; border: 2px solid #3498db; border-radius: 10px; padding: 15px; text-align: center; }
+        .workflow-step .step-num { display: inline-block; width: 30px; height: 30px; line-height: 30px; background: #3498db; color: #fff; border-radius: 50%; font-weight: bold; margin-bottom: 8px; }
+        .workflow-step .step-text { font-size: 0.9em; color: #555; }
+        .workflow-arrow { font-size: 1.5em; color: #3498db; flex-shrink: 0; }
+        .method-card { background: #fff; border-radius: 8px; padding: 20px 25px; margin: 15px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border-left: 4px solid #3498db; }
+        .method-card h4 { margin-top: 0; color: #3498db; }
+        .highlight-green { color: #27ae60; font-weight: bold; }
+        .summary-box { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 10px; padding: 25px 30px; margin: 25px 0; }
+        .summary-box h3 { margin-top: 0; color: #2c3e50; }
+        .strategy-list { list-style: none; margin-left: 0; }
+        .strategy-list li { padding: 10px 15px; margin-bottom: 8px; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+        .strategy-list li strong { color: #3498db; }
+        @media (max-width: 768px) { .container { padding: 20px 15px; } h1 { font-size: 1.5em; } .workflow { flex-direction: column; align-items: stretch; } .workflow-arrow { text-align: center; transform: rotate(90deg); } table { font-size: 0.85em; } th, td { padding: 8px 10px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>UE4 性能优化工具 Unreal Insights 的应用</h1>
+        <p class="ref-link">参考官方文档：<a href="https://dev.epicgames.com/documentation/zh-cn/unreal-engine/unreal-insights?application_version=4.27" target="_blank">Unreal Insights 官方文档</a></p>
+
+        <h2>一、工具简介</h2>
+        <div class="intro-box">
+            <p>Unreal Insights 是 UE4/UE5 内置的<strong>全量录制式性能分析工具</strong>，可以持续录制所有帧的数据，事后回放分析。它是 Epic 从 UE4.24 开始引入并持续完善的<strong>官方主推</strong>性能分析方案。</p>
+        </div>
+        <p><strong>基本工作流程：</strong></p>
+        <div class="workflow">
+            <div class="workflow-step"><div class="step-num">1</div><div class="step-text">启动游戏时<br>添加 trace 启动参数</div></div>
+            <div class="workflow-arrow">→</div>
+            <div class="workflow-step"><div class="step-num">2</div><div class="step-text">正常游玩<br>经过卡顿场景</div></div>
+            <div class="workflow-arrow">→</div>
+            <div class="workflow-step"><div class="step-num">3</div><div class="step-text">关闭游戏后<br>打开 .utrace 文件</div></div>
+            <div class="workflow-arrow">→</div>
+            <div class="workflow-step"><div class="step-num">4</div><div class="step-text">在时间轴上<br>定位卡顿帧并分析</div></div>
+        </div>
+
+        <hr>
+
+        <h2>二、使用方法</h2>
+        <h3>2.1 启动参数</h3>
+        <p>核心启动参数：</p>
+        <pre><code>-trace=gpu,cpu,frame,bookmark -statnamedevents</code></pre>
+        <p><strong>参数说明：</strong></p>
+        <table>
+            <thead><tr><th>参数</th><th>作用</th></tr></thead>
+            <tbody>
+                <tr><td><code>-trace=cpu</code></td><td>录制 CPU 线程事件</td></tr>
+                <tr><td><code>-trace=gpu</code></td><td>录制 GPU 耗时数据</td></tr>
+                <tr><td><code>-trace=frame</code></td><td>录制帧边界标记</td></tr>
+                <tr><td><code>-trace=bookmark</code></td><td>录制书签事件</td></tr>
+                <tr><td><code>-statnamedevents</code></td><td>将 stat 系统的命名事件也写入 trace，可以看到更详细的函数级耗时</td></tr>
+            </tbody>
+        </table>
+
+        <h3>2.2 添加启动参数的位置</h3>
+        <div class="method-card">
+            <h4>方式一：编辑器内启动（最常用）</h4>
+            <p>在 UE4/UE5 编辑器中：</p>
+            <ul>
+                <li>打开 <strong>Edit → Project Settings → Play</strong>（或者 <strong>编辑 → 项目设置 → 运行</strong>）</li>
+                <li>找到 <strong>Additional Launch Parameters</strong>（额外启动参数）</li>
+                <li>在输入框中填入启动参数</li>
+                <li>之后点 Play 运行游戏时就会自动带上这些参数</li>
+            </ul>
+        </div>
+        <div class="method-card">
+            <h4>方式二：编辑器工具栏的 Play 下拉菜单</h4>
+            <p>在编辑器工具栏的 <strong>Play</strong> 按钮旁边的下拉箭头中：</p>
+            <ul>
+                <li>选择 <strong>Advanced Settings...</strong></li>
+                <li>在 <strong>Additional Command Line Parameters</strong> 中填入参数</li>
+            </ul>
+        </div>
+        <div class="method-card">
+            <h4>方式三：独立运行（Standalone）方式</h4>
+            <p>通过命令行启动打包后的游戏或编辑器：</p>
+            <pre><code><span class="comment"># 启动打包后的游戏</span>
+YourGame.exe -trace=gpu,cpu,frame,bookmark -statnamedevents
+
+<span class="comment"># 启动编辑器</span>
+UE4Editor.exe YourProject.uproject -trace=gpu,cpu,frame,bookmark -statnamedevents</code></pre>
+        </div>
+        <div class="method-card">
+            <h4>方式四：快捷方式添加</h4>
+            <p>右键游戏的 <code>.exe</code> 快捷方式 → <strong>属性</strong> → 在 <strong>目标(Target)</strong> 栏的路径末尾追加参数：</p>
+            <pre><code>"X:\path\to\YourGame.exe" -trace=gpu,cpu,frame,bookmark -statnamedevents</code></pre>
+        </div>
+
+        <h3>2.3 .utrace 文件的位置</h3>
+        <p>录制完成后，<code>.utrace</code> 文件默认保存在：</p>
+        <pre><code>项目目录/Saved/TraceSessions/</code></pre>
+
+        <h3>2.4 打开 Unreal Insights 工具</h3>
+        <p>Unreal Insights 是一个独立程序，位于引擎安装目录下：</p>
+        <pre><code>Engine/Binaries/Win64/UnrealInsights.exe</code></pre>
+        <p>启动后，它会自动扫描并列出可用的 <code>.utrace</code> 文件，也可以手动拖入或打开文件进行分析。</p>
+
+        <h3>2.5 自定义 Trace 事件</h3>
+        <p>可以在 C++ 代码中插入自定义的 Trace 事件，这些事件会出现在 Insights 的时间轴上，方便追踪特定业务逻辑的耗时：</p>
+        <pre><code><span class="comment">// C++ 中</span>
+<span class="macro">TRACE_CPUPROFILER_EVENT_SCOPE</span>(<span class="function">MyCustomEvent</span>);
+
+<span class="comment">// 或使用宏</span>
+<span class="macro">SCOPED_NAMED_EVENT</span>(<span class="function">MyFunction</span>, FColor::Red);</code></pre>
+
+        <hr>
+
+        <h2>三、Unreal Insights 相比 stat 工具的优势</h2>
+        <p>Unreal Insights 和 <code>stat unit</code> / <code>stat startfile</code> 都是 UE 引擎内置的性能分析工具，但它们的定位和能力差异很大。<code>stat unit</code> 提供实时帧率显示，<code>stat startfile</code> 可以录制 <code>.ue4stats</code> 文件用于事后分析，而 Unreal Insights 则是 Epic 官方主推的全量录制式深度分析方案。</p>
+
+        <h3>3.1 全量录制 vs 实时快照</h3>
+        <table>
+            <thead><tr><th>特性</th><th>Unreal Insights</th><th>stat unit（实时）</th><th>stat startfile（录制）</th></tr></thead>
+            <tbody>
+                <tr><td>数据方式</td><td><strong>全量录制</strong>，持续记录每一帧的数据</td><td><strong>实时显示</strong>，只能看到当前帧的瞬时数据</td><td>录制 <code>.ue4stats</code> 文件，事后在 Session Frontend 中分析</td></tr>
+                <tr><td>回溯能力</td><td>可以事后回放任意时间段</td><td>无法回溯，错过就看不到了</td><td>支持事后回看，但体验一般</td></tr>
+            </tbody>
+        </table>
+        <blockquote>这意味着你不需要盯着屏幕等卡顿出现，正常游玩后再回头分析即可。</blockquote>
+
+        <h3>3.2 数据粒度更细</h3>
+        <ul>
+            <li><strong>stat unit</strong>：只能看到粗略的 Game Thread / Render Thread / GPU 三大线程的总耗时</li>
+            <li><strong>stat startfile</strong>：可以记录 CPU 端的 stat 统计数据，粒度中等</li>
+            <li><strong>Unreal Insights</strong>：
+                <ul>
+                    <li>可以展开到<strong>每个函数级别</strong>的耗时</li>
+                    <li>支持查看 CPU 各线程的详细调用栈</li>
+                    <li>支持 GPU 事件的详细分析</li>
+                    <li>可以看到具体是哪个 Actor、哪个 Tick、哪个 RPC 导致的耗时</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>3.3 可视化时间轴</h3>
+        <p>Unreal Insights 提供了<strong>时间轴视图</strong>，可以：</p>
+        <ul>
+            <li>直观看到帧耗时的波动曲线</li>
+            <li>快速定位<strong>耗时峰值帧</strong>（卡顿帧）</li>
+            <li>缩放到具体帧，展开查看该帧内所有事件的时序关系</li>
+            <li>多线程并排对比，发现线程间的等待和阻塞</li>
+        </ul>
+        <p>而 <code>stat unit</code> 只是屏幕角落的几个数字，无法看到趋势和上下文；<code>stat startfile</code> 的 Session Frontend Profiler 虽然有基础时间轴，但交互体验较老旧，大文件加载慢。</p>
+
+        <h3>3.4 支持多种 Trace Channel</h3>
+        <p>Unreal Insights 支持多种数据通道，可以按需组合：</p>
+        <table>
+            <thead><tr><th>Channel</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr><td><code>cpu</code></td><td>CPU 线程事件和函数调用</td></tr>
+                <tr><td><code>gpu</code></td><td>GPU 渲染事件耗时</td></tr>
+                <tr><td><code>frame</code></td><td>帧边界标记</td></tr>
+                <tr><td><code>bookmark</code></td><td>自定义书签事件</td></tr>
+                <tr><td><code>memory</code></td><td>内存分配和释放追踪</td></tr>
+                <tr><td><code>loadtime</code></td><td>资源加载耗时</td></tr>
+                <tr><td><code>file</code></td><td>文件 I/O 操作</td></tr>
+            </tbody>
+        </table>
+        <p><code>stat unit</code> 只能看到线程级别的总耗时；<code>stat startfile</code> 主要记录 CPU stat 数据，不支持 GPU、内存等维度。</p>
+
+        <h3>3.5 录制开销对比</h3>
+        <ul>
+            <li><strong>stat unit</strong>：开销极小，但只能实时查看</li>
+            <li><strong>stat startfile</strong>：录制开销<strong>较高</strong>，录制期间对游戏性能有明显影响，录制到的数据可能不完全反映真实运行情况</li>
+            <li><strong>Unreal Insights</strong>：trace 系统经过专门优化，录制开销<strong>极低</strong>，几乎不影响帧率，数据更接近真实表现</li>
+        </ul>
+
+        <h3>3.6 离线分析与团队协作</h3>
+        <ul>
+            <li><strong>stat unit</strong>：只能在运行时查看，数据无法保存和分享</li>
+            <li><strong>stat startfile</strong>：可以录制 <code>.ue4stats</code> 文件离线分析，但文件体积较大，分享和协作能力有限</li>
+            <li><strong>Unreal Insights</strong>：
+                <ul>
+                    <li>录制后生成 <code>.utrace</code> 文件，可以在<strong>另一台电脑</strong>上用独立工具打开分析</li>
+                    <li><code>.utrace</code> 文件可以<strong>分享给其他同事</strong>，让不在现场的人也能分析问题</li>
+                    <li>支持添加书签和标记，方便沟通定位问题</li>
+                    <li>文件更紧凑，采用高效的二进制流式写入</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>3.7 Unreal Insights (.utrace) vs stat startfile (.ue4stats) 详细对比</h3>
+        <table>
+            <thead><tr><th>维度</th><th>stat startfile (.ue4stats)</th><th>Unreal Insights (.utrace)</th></tr></thead>
+            <tbody>
+                <tr><td><strong>录制开销</strong></td><td>较高，录制期间对游戏性能有明显影响</td><td class="highlight-green">极低，专门优化过的 trace 系统，几乎不影响帧率</td></tr>
+                <tr><td><strong>文件体积</strong></td><td>较大，长时间录制会产生巨大文件</td><td class="highlight-green">更紧凑，采用高效的二进制流式写入</td></tr>
+                <tr><td><strong>分析工具</strong></td><td>编辑器内置的 Session Frontend Profiler，功能较老旧</td><td class="highlight-green">独立的 Unreal Insights 应用，UI 更现代，交互更流畅</td></tr>
+                <tr><td><strong>时间轴导航</strong></td><td>支持但体验一般，大文件加载慢</td><td class="highlight-green">流畅的缩放和平移，支持大规模数据的快速浏览</td></tr>
+                <tr><td><strong>数据通道</strong></td><td>主要是 CPU stat 数据</td><td class="highlight-green">支持 CPU、GPU、内存、文件 I/O、资源加载等多种通道</td></tr>
+                <tr><td><strong>GPU 分析</strong></td><td>不支持或支持有限</td><td class="highlight-green">原生支持 GPU trace，可以看到渲染管线各阶段耗时</td></tr>
+                <tr><td><strong>内存分析</strong></td><td>不支持</td><td class="highlight-green">支持内存分配追踪（<code>-trace=memory</code>）</td></tr>
+                <tr><td><strong>实时连接</strong></td><td>不支持</td><td class="highlight-green">支持实时连接正在运行的游戏进行分析</td></tr>
+                <tr><td><strong>版本趋势</strong></td><td>UE4 时代的老工具，Epic 已不再重点维护</td><td class="highlight-green">Epic 当前主推的性能分析方案，持续更新中</td></tr>
+            </tbody>
+        </table>
+
+        <hr>
+
+        <h2>四、总结</h2>
+        <h3>三种工具的定位对比</h3>
+        <table>
+            <thead><tr><th>维度</th><th>stat unit（实时）</th><th>stat startfile (.ue4stats)</th><th>Unreal Insights (.utrace)</th></tr></thead>
+            <tbody>
+                <tr><td>使用门槛</td><td>⭐ 极低，控制台输入即可</td><td>⭐⭐ 控制台命令录制</td><td>⭐⭐ 需要添加启动参数</td></tr>
+                <tr><td>数据深度</td><td>浅（线程级总耗时）</td><td>中（CPU stat 数据）</td><td><strong>深（函数级调用栈 + 多维度）</strong></td></tr>
+                <tr><td>回溯分析</td><td>❌ 不支持</td><td>✅ 支持</td><td>✅ 完整回放</td></tr>
+                <tr><td>可视化</td><td>简单数字</td><td>基础时间轴</td><td><strong>完整时间轴，交互流畅</strong></td></tr>
+                <tr><td>录制开销</td><td>无</td><td>较高</td><td><strong>极低</strong></td></tr>
+                <tr><td>GPU 分析</td><td>❌</td><td>❌</td><td>✅</td></tr>
+                <tr><td>内存分析</td><td>❌</td><td>❌</td><td>✅</td></tr>
+                <tr><td>离线分析</td><td>❌</td><td>✅</td><td>✅</td></tr>
+                <tr><td>团队协作</td><td>❌</td><td>⚠️ 有限</td><td>✅ 可分享 .utrace</td></tr>
+                <tr><td>适用场景</td><td>快速粗略检查</td><td>简单的事后分析</td><td><strong>深度性能分析</strong></td></tr>
+            </tbody>
+        </table>
+
+        <div class="summary-box">
+            <h3>推荐使用策略</h3>
+            <ul class="strategy-list">
+                <li><strong>日常开发：</strong>先用 <code>stat unit</code> 快速判断当前帧率是否正常</li>
+                <li><strong>发现问题后：</strong>使用 Unreal Insights 深入定位"为什么卡"以及"卡在哪里"</li>
+                <li><strong>.ue4stats 录制：</strong>如果项目还在用 UE4 且习惯了 stat 录制的工作流，继续用也没问题；但如果是新项目或者需要更深入的分析，建议迁移到 Unreal Insights</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
