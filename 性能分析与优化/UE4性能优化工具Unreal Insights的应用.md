@@ -35,50 +35,26 @@ Unreal Insights 是 UE4/UE5 内置的**全量录制式性能分析工具**，可
 | `-trace=bookmark` | 录制书签事件 |
 | `-statnamedevents` | 将 stat 系统的命名事件也写入 trace，可以看到更详细的函数级耗时 |
 
-### 2.2 添加启动参数的位置
+### 2.2 使用控制台命令录制.utrace文件
+以任意方式启动游戏
 
-#### 方式一：编辑器内启动（最常用）
+按 ~（波浪键）打开控制台
 
-在 UE4/UE5 编辑器中：
+输入命令启动录制：Trace.Start cpu,gpu,frame,bookmark 
 
-- 打开 **Edit → Project Settings → Play**（或者 **编辑 → 项目设置 → 运行**）
-- 找到 **Additional Launch Parameters**（额外启动参数）
-- 在输入框中填入启动参数
-- 之后点 Play 运行游戏时就会自动带上这些参数
+操作你想分析的卡顿界面
 
-#### 方式二：编辑器工具栏的 Play 下拉菜单
+录制完成后输入：Trace.Stop 
 
-在编辑器工具栏的 **Play** 按钮旁边的下拉箭头中：
+退出游戏，去 Saved/ 目录查找 .utrace 文件
 
-- 选择 **Advanced Settings...**
-- 在 **Additional Command Line Parameters** 中填入参数
-
-#### 方式三：独立运行（Standalone）方式
-
-通过命令行启动打包后的游戏或编辑器：
-
-```bash
-# 启动打包后的游戏
-YourGame.exe -trace=gpu,cpu,frame,bookmark -statnamedevents
-
-# 启动编辑器
-UE4Editor.exe YourProject.uproject -trace=gpu,cpu,frame,bookmark -statnamedevents
-```
-
-#### 方式四：快捷方式添加
-
-右键游戏的 `.exe` 快捷方式 → **属性** → 在 **目标(Target)** 栏的路径末尾追加参数：
-
-```
-"X:\path\to\YourGame.exe" -trace=gpu,cpu,frame,bookmark -statnamedevents
-```
 
 ### 2.3 .utrace 文件的位置
 
 录制完成后，`.utrace` 文件默认保存在：
 
 ```
-项目目录/Saved/TraceSessions/
+项目目录/Saved/
 ```
 
 ### 2.4 打开 Unreal Insights 工具

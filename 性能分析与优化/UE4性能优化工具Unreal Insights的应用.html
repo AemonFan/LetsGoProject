@@ -88,43 +88,25 @@
             </tbody>
         </table>
 
-        <h3>2.2 添加启动参数的位置</h3>
+        <h3>2.2 使用控制台命令录制 .utrace 文件</h3>
         <div class="method-card">
-            <h4>方式一：编辑器内启动（最常用）</h4>
-            <p>在 UE4/UE5 编辑器中：</p>
-            <ul>
-                <li>打开 <strong>Edit → Project Settings → Play</strong>（或者 <strong>编辑 → 项目设置 → 运行</strong>）</li>
-                <li>找到 <strong>Additional Launch Parameters</strong>（额外启动参数）</li>
-                <li>在输入框中填入启动参数</li>
-                <li>之后点 Play 运行游戏时就会自动带上这些参数</li>
-            </ul>
-        </div>
-        <div class="method-card">
-            <h4>方式二：编辑器工具栏的 Play 下拉菜单</h4>
-            <p>在编辑器工具栏的 <strong>Play</strong> 按钮旁边的下拉箭头中：</p>
-            <ul>
-                <li>选择 <strong>Advanced Settings...</strong></li>
-                <li>在 <strong>Additional Command Line Parameters</strong> 中填入参数</li>
-            </ul>
-        </div>
-        <div class="method-card">
-            <h4>方式三：独立运行（Standalone）方式</h4>
-            <p>通过命令行启动打包后的游戏或编辑器：</p>
-            <pre><code><span class="comment"># 启动打包后的游戏</span>
-YourGame.exe -trace=gpu,cpu,frame,bookmark -statnamedevents
-
-<span class="comment"># 启动编辑器</span>
-UE4Editor.exe YourProject.uproject -trace=gpu,cpu,frame,bookmark -statnamedevents</code></pre>
-        </div>
-        <div class="method-card">
-            <h4>方式四：快捷方式添加</h4>
-            <p>右键游戏的 <code>.exe</code> 快捷方式 → <strong>属性</strong> → 在 <strong>目标(Target)</strong> 栏的路径末尾追加参数：</p>
-            <pre><code>"X:\path\to\YourGame.exe" -trace=gpu,cpu,frame,bookmark -statnamedevents</code></pre>
+            <p>以任意方式启动游戏</p>
+            <ol>
+                <li>按 <code>~</code>（波浪键）打开控制台</li>
+                <li>输入命令启动录制：
+                    <pre><code>Trace.Start cpu,gpu,frame,bookmark</code></pre>
+                </li>
+                <li>操作你想分析的卡顿界面</li>
+                <li>录制完成后输入：
+                    <pre><code>Trace.Stop</code></pre>
+                </li>
+                <li>退出游戏，去 <code>Saved/</code> 目录查找 <code>.utrace</code> 文件</li>
+            </ol>
         </div>
 
         <h3>2.3 .utrace 文件的位置</h3>
         <p>录制完成后，<code>.utrace</code> 文件默认保存在：</p>
-        <pre><code>项目目录/Saved/TraceSessions/</code></pre>
+        <pre><code>项目目录/Saved/</code></pre>
 
         <h3>2.4 打开 Unreal Insights 工具</h3>
         <p>Unreal Insights 是一个独立程序，位于引擎安装目录下：</p>
