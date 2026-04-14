@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAS（Gameplay Ability System）完整学习文档</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/build/highlight.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+<style>
+  :root {
+    --sidebar-width: 280px;
+    --header-height: 56px;
+    --bg-dark: #0d1117;
+    --bg-sidebar: #161b22;
+    --bg-content: #0d1117;
+    --bg-card: #161b22;
+    --border-color: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --accent-blue: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-orange: #d29922;
+    --accent-purple: #bc8cff;
+    --accent-red: #f85149;
+    --code-bg: #161b22;
+    --table-header-bg: #21262d;
+    --table-row-alt: #161b22;
+    --scrollbar-thumb: #30363d;
+    --scrollbar-track: #0d1117;
+    --sidebar-active-bg: #1f2937;
+    --sidebar-hover-bg: #1c2128;
+    --tag-bg: #1f2937;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ===== 顶部标题栏 ===== */
+  #header {
+    height: var(--header-height);
+    background: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+    z-index: 100;
+  }
+
+  #header .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  #header .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #58a6ff, #bc8cff);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  #header .logo-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+
+  #header .logo-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  #search-box {
+    flex: 1;
+    max-width: 400px;
+    margin-left: auto;
+    position: relative;
+  }
+
+  #search-input {
+    width: 100%;
+    padding: 7px 12px 7px 36px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  #search-input:focus {
+    border-color: var(--accent-blue);
+  }
+
+  #search-input::placeholder { color: var(--text-muted); }
+
+  .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  /* ===== 主体布局 ===== */
+  #main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ===== 侧边栏 ===== */
+  #sidebar {
+    width: var(--sidebar-width);
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  #sidebar-header {
+    padding: 16px 16px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  #nav-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+
+  #nav-list::-webkit-scrollbar { width: 4px; }
+  #nav-list::-webkit-scrollbar-track { background: transparent; }
+  #nav-list::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
+
+  .nav-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 0;
+    transition: background 0.15s;
+    border-left: 3px solid transparent;
+    text-decoration: none;
+    color: var(--text-secondary);
+  }
+
+  .nav-item:hover {
+    background: var(--sidebar-hover-bg);
+    color: var(--text-primary);
+  }
+
+  .nav-item.active {
+    background: var(--sidebar-active-bg);
+    border-left-color: var(--accent-blue);
+    color: var(--accent-blue);
+  }
+
+  .nav-item .nav-num {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 22px;
+    padding-top: 1px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  .nav-item.active .nav-num { color: var(--accent-blue); }
+
+  .nav-item .nav-label {
+    font-size: 13px;
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .nav-item .nav-tag {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: var(--tag-bg);
+    color: var(--text-muted);
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+
+  .nav-item.active .nav-tag {
+    background: rgba(88, 166, 255, 0.15);
+    color: var(--accent-blue);
+  }
+
+  /* ===== 内容区 ===== */
+  #content-area {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--bg-content);
+    position: relative;
+  }
+
+  #content-area::-webkit-scrollbar { width: 6px; }
+  #content-area::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+  #content-area::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+  #content-wrapper {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 48px 80px;
+  }
+
+  /* ===== Markdown 渲染样式 ===== */
+  .md-content h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+    line-height: 1.3;
+  }
+
+  .md-content h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+    margin: 32px 0 16px;
+    line-height: 1.4;
+  }
+
+  .md-content h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent-blue);
+    margin: 24px 0 12px;
+  }
+
+  .md-content h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 16px 0 8px;
+  }
+
+  .md-content p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text-primary);
+    margin-bottom: 14px;
+  }
+
+  .md-content ul, .md-content ol {
+    padding-left: 24px;
+    margin-bottom: 14px;
+  }
+
+  .md-content li {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .md-content li > ul, .md-content li > ol {
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
+
+  .md-content code {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    font-size: 12.5px;
+    background: var(--code-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: #e6edf3;
+  }
+
+  .md-content pre {
+    background: #0d1117;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin: 16px 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .md-content pre code {
+    display: block;
+    padding: 16px 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    color: #e6edf3;
+  }
+
+  .md-content pre code::-webkit-scrollbar { height: 4px; }
+  .md-content pre code::-webkit-scrollbar-track { background: transparent; }
+  .md-content pre code::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
+
+  /* 代码块语言标签 */
+  .code-block-wrapper {
+    position: relative;
+  }
+
+  .code-lang-tag {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'SF Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    z-index: 1;
+  }
+
+  /* 表格 */
+  .md-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13.5px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+  }
+
+  .md-content th {
+    background: var(--table-header-bg);
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+  }
+
+  .md-content td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    vertical-align: top;
+    line-height: 1.6;
+  }
+
+  .md-content tr:last-child td { border-bottom: none; }
+
+  .md-content tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+  .md-content td code, .md-content th code {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* 引用块 */
+  .md-content blockquote {
+    border-left: 4px solid var(--accent-blue);
+    background: rgba(88, 166, 255, 0.06);
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .md-content blockquote p {
+    color: var(--text-secondary);
+    margin-bottom: 0;
+    font-size: 13.5px;
+  }
+
+  /* 水平线 */
+  .md-content hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 28px 0;
+  }
+
+  /* 强调 */
+  .md-content strong { color: var(--text-primary); font-weight: 600; }
+  .md-content em { color: var(--accent-orange); font-style: italic; }
+
+  /* 链接 */
+  .md-content a {
+    color: var(--accent-blue);
+    text-decoration: none;
+  }
+  .md-content a:hover { text-decoration: underline; }
+
+  /* ===== Mermaid 图表 ===== */
+  .mermaid-wrapper {
+    background: #161b22;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 24px 16px;
+    margin: 16px 0;
+    overflow-x: auto;
+    text-align: center;
+  }
+
+  .mermaid-wrapper svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* ===== 首页样式 ===== */
+  .index-hero {
+    text-align: center;
+    padding: 40px 0 32px;
+  }
+
+  .index-hero .hero-icon {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, #58a6ff, #bc8cff);
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(88, 166, 255, 0.3);
+  }
+
+  .index-hero h1 {
+    font-size: 32px !important;
+    border: none !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 12px !important;
+    background: linear-gradient(135deg, #58a6ff, #bc8cff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .index-hero p {
+    font-size: 15px !important;
+    color: var(--text-secondary) !important;
+    max-width: 600px;
+    margin: 0 auto 8px !important;
+  }
+
+  .doc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 32px 0;
+  }
+
+  .doc-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: block;
+  }
+
+  .doc-card:hover {
+    border-color: var(--accent-blue);
+    background: rgba(88, 166, 255, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(88, 166, 255, 0.15);
+  }
+
+  .doc-card .card-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-blue);
+    font-family: 'SF Mono', monospace;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .doc-card .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .doc-card .card-desc {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .doc-card .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .doc-card .card-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--tag-bg);
+    color: var(--text-muted);
+  }
+
+  /* 快速导航区 */
+  .quick-nav {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 24px 0;
+  }
+
+  .quick-nav h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .quick-nav-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+  }
+
+  .quick-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+    color: var(--text-secondary);
+    font-size: 13px;
+    text-decoration: none;
+  }
+
+  .quick-nav-item:hover {
+    background: var(--sidebar-hover-bg);
+    color: var(--accent-blue);
+  }
+
+  .quick-nav-item .qn-icon { font-size: 16px; }
+
+  /* ===== 加载动画 ===== */
+  #loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-muted);
+    font-size: 14px;
+    gap: 10px;
+  }
+
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--accent-blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== 搜索结果 ===== */
+  #search-results {
+    position: absolute;
+    top: calc(var(--header-height) + 8px);
+    right: 20px;
+    width: 400px;
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index: 200;
+    max-height: 400px;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .search-result-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.15s;
+  }
+
+  .search-result-item:last-child { border-bottom: none; }
+
+  .search-result-item:hover { background: var(--sidebar-hover-bg); }
+
+  .search-result-item .sr-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .search-result-item .sr-excerpt {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .search-result-item .sr-excerpt mark {
+    background: rgba(88, 166, 255, 0.3);
+    color: var(--accent-blue);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+
+  /* ===== 响应式 ===== */
+  @media (max-width: 768px) {
+    :root { --sidebar-width: 240px; }
+    #content-wrapper { padding: 24px 20px 60px; }
+    .doc-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ===== 目录锚点高亮 ===== */
+  .toc-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 13px;
+  }
+
+  .toc-container h4 {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+
+  .toc-container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .toc-container li { margin-bottom: 4px; }
+
+  .toc-container a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13px;
+    display: block;
+    padding: 2px 0;
+    transition: color 0.15s;
+  }
+
+  .toc-container a:hover { color: var(--accent-blue); }
+
+  .toc-container .toc-h3 { padding-left: 16px; font-size: 12px; }
+  .toc-container .toc-h4 { padding-left: 32px; font-size: 11.5px; }
+</style>
+</head>
+<body>
+
+<!-- 顶部标题栏 -->
+<div id="header">
+  <div class="logo">
+    <div class="logo-icon">G</div>
+    <div>
+      <div class="logo-text">GAS 学习文档</div>
+      <div class="logo-sub">Gameplay Ability System · UE4 源码分析</div>
+    </div>
+  </div>
+  <div id="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-input" placeholder="搜索文档内容..." autocomplete="off">
+  </div>
+</div>
+
+<!-- 搜索结果浮层 -->
+<div id="search-results"></div>
+
+<!-- 主体 -->
+<div id="main">
+  <!-- 侧边栏 -->
+  <div id="sidebar">
+    <div id="sidebar-header">文档目录</div>
+    <div id="nav-list">
+      <div class="nav-item active" data-doc="index" onclick="loadDoc('index')">
+        <span class="nav-num">🏠</span>
+        <span class="nav-label">总目录</span>
+        <span class="nav-tag">首页</span>
+      </div>
+      <div class="nav-item" data-doc="01" onclick="loadDoc('01')">
+        <span class="nav-num">01</span>
+        <span class="nav-label">GAS 整体架构概述</span>
+        <span class="nav-tag">架构</span>
+      </div>
+      <div class="nav-item" data-doc="02" onclick="loadDoc('02')">
+        <span class="nav-num">02</span>
+        <span class="nav-label">AbilitySystemComponent</span>
+        <span class="nav-tag">核心</span>
+      </div>
+      <div class="nav-item" data-doc="03" onclick="loadDoc('03')">
+        <span class="nav-num">03</span>
+        <span class="nav-label">GameplayAbility 技能系统</span>
+        <span class="nav-tag">技能</span>
+      </div>
+      <div class="nav-item" data-doc="04" onclick="loadDoc('04')">
+        <span class="nav-num">04</span>
+        <span class="nav-label">AttributeSet 属性系统</span>
+        <span class="nav-tag">属性</span>
+      </div>
+      <div class="nav-item" data-doc="05" onclick="loadDoc('05')">
+        <span class="nav-num">05</span>
+        <span class="nav-label">GameplayEffect 效果系统</span>
+        <span class="nav-tag">效果</span>
+      </div>
+      <div class="nav-item" data-doc="06" onclick="loadDoc('06')">
+        <span class="nav-num">06</span>
+        <span class="nav-label">GameplayTag 标签系统</span>
+        <span class="nav-tag">标签</span>
+      </div>
+      <div class="nav-item" data-doc="07" onclick="loadDoc('07')">
+        <span class="nav-num">07</span>
+        <span class="nav-label">GameplayCue 表现层</span>
+        <span class="nav-tag">表现</span>
+      </div>
+      <div class="nav-item" data-doc="08" onclick="loadDoc('08')">
+        <span class="nav-num">08</span>
+        <span class="nav-label">AbilityTask 异步任务</span>
+        <span class="nav-tag">任务</span>
+      </div>
+      <div class="nav-item" data-doc="09" onclick="loadDoc('09')">
+        <span class="nav-num">09</span>
+        <span class="nav-label">预测系统（Prediction）</span>
+        <span class="nav-tag">网络</span>
+      </div>
+      <div class="nav-item" data-doc="10" onclick="loadDoc('10')">
+        <span class="nav-num">10</span>
+        <span class="nav-label">AbilitySystemGlobals</span>
+        <span class="nav-tag">配置</span>
+      </div>
+      <div class="nav-item" data-doc="11" onclick="loadDoc('11')">
+        <span class="nav-num">11</span>
+        <span class="nav-label">ExecutionCalculation</span>
+        <span class="nav-tag">计算</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 内容区 -->
+  <div id="content-area">
+    <div id="content-wrapper">
+      <div id="loading">
+        <div class="spinner"></div>
+        <span>正在加载文档...</span>
+      </div>
+      <div id="doc-content" class="md-content" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 文档内容数据 -->
+<script>
+const docs = {};
+</script>
+<script src="docs-content.js"></script>
+<script src="docs-content-2.js"></script>
+
+<script>
+// ===== 首页内容 =====
+docs['index'] = `
+<div class="index-hero">
+  <div class="hero-icon">⚡</div>
+  <h1>GAS 完整学习文档</h1>
+  <p>基于 UE4 GAS 源码（GameplayAbilities 插件）深度分析生成</p>
+  <p style="font-size:13px;color:#6e7681;">源码路径：Engine/Plugins/Runtime/GameplayAbilities/Source/GameplayAbilities/</p>
+</div>
+
+<div class="quick-nav">
+  <h3>🔑 核心类速查</h3>
+  <div class="quick-nav-grid">
+    <a class="quick-nav-item" onclick="loadDoc('02')"><span class="qn-icon">🎯</span>UAbilitySystemComponent</a>
+    <a class="quick-nav-item" onclick="loadDoc('03')"><span class="qn-icon">⚔️</span>UGameplayAbility</a>
+    <a class="quick-nav-item" onclick="loadDoc('04')"><span class="qn-icon">📊</span>UAttributeSet</a>
+    <a class="quick-nav-item" onclick="loadDoc('05')"><span class="qn-icon">✨</span>UGameplayEffect</a>
+    <a class="quick-nav-item" onclick="loadDoc('06')"><span class="qn-icon">🏷️</span>FGameplayTag</a>
+    <a class="quick-nav-item" onclick="loadDoc('07')"><span class="qn-icon">🎆</span>GameplayCue</a>
+    <a class="quick-nav-item" onclick="loadDoc('08')"><span class="qn-icon">⏳</span>UAbilityTask</a>
+    <a class="quick-nav-item" onclick="loadDoc('09')"><span class="qn-icon">🌐</span>预测系统</a>
+    <a class="quick-nav-item" onclick="loadDoc('10')"><span class="qn-icon">⚙️</span>AbilitySystemGlobals</a>
+    <a class="quick-nav-item" onclick="loadDoc('11')"><span class="qn-icon">🧮</span>ExecutionCalculation</a>
+  </div>
+</div>
+
+<div class="doc-grid">
+  <a class="doc-card" onclick="loadDoc('01')">
+    <div class="card-num">文档 01</div>
+    <div class="card-title">GAS 整体架构概述</div>
+    <div class="card-desc">架构设计、核心组件关系、初始化流程、网络架构、关键枚举速查</div>
+    <div class="card-tags"><span class="card-tag">架构</span><span class="card-tag">类图</span><span class="card-tag">流程图</span></div>
+  </a>
+  <a class="doc-card" onclick="loadDoc('02')">
+    <div class="card-num">文档 02</div>
+    <div class="card-title">AbilitySystemComponent</div>
+    <div class="card-desc">ASC 核心职责、所有 API 详解、网络复制机制、输入绑定、完整工作流程</div>
+    <div class="card-tags"><span class="card-tag">核心</span><span class="card-tag">API</span><span class="card-tag">网络</span></div>
+  </a>
+  <a class="doc-card" onclick="loadDoc('03')">
+    <div class="card-num">文档 03</div>
+    <div class="card-title">GameplayAbility 技能系统</div>
+    <div class="card-desc">三大策略枚举、完整生命周期、激活条件、ActorInfo、典型实现模板</div>
+    <div class="card-tags"><span class="card-tag">技能</span><span class="card-tag">生命周期</span><span class="card-tag">策略</span></div>
+  </a>
+  <a class="doc-card" onclick="loadDoc('04')">
+    <div class="card-num">文档 04</div>
+    <div class="card-title">AttributeSet 属性系统</div>
+    <div class="card-desc">FGameplayAttributeData、ATTRIBUTE_ACCESSORS 宏、PreAttributeChange、PostGameplayEffectExecute</div>
+    <div class="card-tags"><span class="card-tag">属性</span><span class="card-tag">宏</span><span class="card-tag">回调</span></div>
+  </a>
+  <a class="doc-card" onclick="loadDoc('05')">
+    <div class="card-num">文档 05</div>
+    <div class="card-title">GameplayEffect 效果系统</div>
+    <div class="card-desc">三种持续类型、Modifier、SetByCaller、ExecutionCalculation、堆叠系统、周期执行</div>
+    <div class="card-tags"><span class="card-tag">效果</span><span class="card-tag">修改器</span><span class="card-tag">堆叠</span></div>
+  </a>
+  <a class="doc-card" onclick="loadDoc('06')">
+    <div class="card-num">文档 06</div>
+    <div class="card-title">GameplayTag 标签系统</div>
+    <div class="card-desc">标签计数容器、事件委托、Cue 参数、网络复制、项目命名规范</div>
+    <div class="card-tags"><span class="card-tag">标签</span><span class="card-tag">事件</span><span class="card-tag">规范</span></div>
+  </a>
+  <a class="doc-card" onclick="loadDoc('07')">
+    <div class="card-num">文档 07</div>
+    <div class="card-title">GameplayCue 表现层系统</div>
+    <div class="card-desc">Static/Actor 两种 Cue 类型、事件类型、管理器、对象池、标签匹配规则</div>
+    <div class="card-tags"><span class="card-tag">表现</span><span class="card-tag">对象池</span><span class="card-tag">特效</span></div>
+  </a>
+  <a class="doc-card" onclick="loadDoc('08')">
+    <div class="card-num">文档 08</div>
+    <div class="card-title">AbilityTask 异步任务系统</div>
+    <div class="card-desc">任务基类、PlayMontageAndWait、WaitGameplayEvent、37个任务类列表、自定义任务</div>
+    <div class="card-tags"><span class="card-tag">任务</span><span class="card-tag">异步</span><span class="card-tag">动画</span></div>
+  </a>
+  <a class="doc-card" onclick="loadDoc('09')">
+    <div class="card-num">文档 09</div>
+    <div class="card-title">预测系统（Prediction）</div>
+    <div class="card-desc">FPredictionKey、FScopedPredictionWindow、预测依赖链、完整预测流程时序图</div>
+    <div class="card-tags"><span class="card-tag">网络</span><span class="card-tag">预测</span><span class="card-tag">回滚</span></div>
+  </a>
+  <a class="doc-card" onclick="loadDoc('10')">
+    <div class="card-num">文档 10</div>
+    <div class="card-title">AbilitySystemGlobals</div>
+    <div class="card-desc">全局配置单例、全局标签、调试命令、完整 ini 配置参考、自定义扩展</div>
+    <div class="card-tags"><span class="card-tag">配置</span><span class="card-tag">调试</span><span class="card-tag">全局</span></div>
+  </a>
+  <a class="doc-card" onclick="loadDoc('11')">
+    <div class="card-num">文档 11</div>
+    <div class="card-title">ExecutionCalculation</div>
+    <div class="card-desc">属性捕获宏、快照 vs 实时、完整 RPG 伤害计算示例、与 MMC 的区别</div>
+    <div class="card-tags"><span class="card-tag">计算</span><span class="card-tag">伤害</span><span class="card-tag">属性捕获</span></div>
+  </a>
+</div>
+
+<div class="quick-nav" style="margin-top:8px;">
+  <h3>📦 关键数据结构速查</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;font-size:13px;color:#8b949e;">
+    <div style="padding:8px 12px;background:#0d1117;border-radius:6px;border:1px solid #30363d;">
+      <code style="color:#58a6ff;font-size:12px;">FGameplayAbilitySpec</code><br>
+      <span style="font-size:12px;">技能规格（已授予的技能实例信息）</span>
+    </div>
+    <div style="padding:8px 12px;background:#0d1117;border-radius:6px;border:1px solid #30363d;">
+      <code style="color:#58a6ff;font-size:12px;">FActiveGameplayEffect</code><br>
+      <span style="font-size:12px;">激活中的效果实例</span>
+    </div>
+    <div style="padding:8px 12px;background:#0d1117;border-radius:6px;border:1px solid #30363d;">
+      <code style="color:#58a6ff;font-size:12px;">FGameplayEffectSpec</code><br>
+      <span style="font-size:12px;">效果规格（运行时效果数据）</span>
+    </div>
+    <div style="padding:8px 12px;background:#0d1117;border-radius:6px;border:1px solid #30363d;">
+      <code style="color:#58a6ff;font-size:12px;">FGameplayEffectContextHandle</code><br>
+      <span style="font-size:12px;">效果上下文句柄（来源信息）</span>
+    </div>
+    <div style="padding:8px 12px;background:#0d1117;border-radius:6px;border:1px solid #30363d;">
+      <code style="color:#58a6ff;font-size:12px;">FPredictionKey</code><br>
+      <span style="font-size:12px;">预测键（客户端预测使用）</span>
+    </div>
+    <div style="padding:8px 12px;background:#0d1117;border-radius:6px;border:1px solid #30363d;">
+      <code style="color:#58a6ff;font-size:12px;">FGameplayCueParameters</code><br>
+      <span style="font-size:12px;">Cue 参数（传递给表现层）</span>
+    </div>
+  </div>
+</div>
+`;
+
+// ===== Mermaid 初始化 =====
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  themeVariables: {
+    darkMode: true,
+    background: '#161b22',
+    primaryColor: '#1f2937',
+    primaryTextColor: '#e6edf3',
+    primaryBorderColor: '#58a6ff',
+    lineColor: '#8b949e',
+    secondaryColor: '#21262d',
+    tertiaryColor: '#0d1117',
+    edgeLabelBackground: '#161b22',
+    clusterBkg: '#161b22',
+    clusterBorder: '#30363d',
+    titleColor: '#e6edf3',
+    nodeTextColor: '#e6edf3',
+    actorBkg: '#1f2937',
+    actorBorder: '#58a6ff',
+    actorTextColor: '#e6edf3',
+    actorLineColor: '#8b949e',
+    signalColor: '#8b949e',
+    signalTextColor: '#e6edf3',
+    labelBoxBkgColor: '#1f2937',
+    labelBoxBorderColor: '#30363d',
+    labelTextColor: '#e6edf3',
+    loopTextColor: '#e6edf3',
+    noteBorderColor: '#d29922',
+    noteBkgColor: '#1f2937',
+    noteTextColor: '#e6edf3',
+    activationBorderColor: '#58a6ff',
+    activationBkgColor: '#1f2937',
+    sequenceNumberColor: '#e6edf3',
+    fontSize: '14px',
+  },
+  flowchart: {
+    htmlLabels: true,
+    curve: 'basis',
+    padding: 20,
+    nodeSpacing: 50,
+    rankSpacing: 60,
+  },
+  classDiagram: {
+    useMaxWidth: true,
+  },
+  sequence: {
+    useMaxWidth: true,
+    actorMargin: 80,
+    width: 160,
+    height: 60,
+    boxMargin: 10,
+    boxTextMargin: 5,
+    noteMargin: 10,
+    messageMargin: 35,
+    mirrorActors: false,
+    bottomMarginAdj: 1,
+    useMaxWidth: true,
+    rightAngles: false,
+    showSequenceNumbers: false,
+  },
+  securityLevel: 'loose',
+});
+
+// ===== marked 配置 =====
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
+
+// ===== 当前文档 =====
+let currentDoc = 'index';
+
+// ===== 加载文档 =====
+async function loadDoc(docId) {
+  // 更新导航高亮
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.doc === docId);
+  });
+
+  currentDoc = docId;
+
+  const contentEl = document.getElementById('doc-content');
+  const loadingEl = document.getElementById('loading');
+
+  contentEl.style.display = 'none';
+  loadingEl.style.display = 'flex';
+
+  // 滚动到顶部
+  document.getElementById('content-area').scrollTop = 0;
+
+  // 短暂延迟，让 UI 更新
+  await new Promise(r => setTimeout(r, 50));
+
+  try {
+    const content = docs[docId];
+    if (!content) {
+      contentEl.innerHTML = '<p style="color:#f85149;">文档内容未找到</p>';
+    } else if (docId === 'index') {
+      // 首页直接插入 HTML
+      contentEl.innerHTML = content;
+    } else {
+      // Markdown 渲染
+      const html = renderMarkdown(content);
+      contentEl.innerHTML = html;
+
+      // 代码高亮
+      if (typeof hljs !== 'undefined') {
+        contentEl.querySelectorAll('pre code').forEach(block => {
+          hljs.highlightElement(block);
+        });
+      }
+
+      // 渲染 Mermaid 图表
+      await renderMermaidDiagrams(contentEl);
+    }
+  } catch (e) {
+    contentEl.innerHTML = `<p style="color:#f85149;">渲染错误：${e.message}</p>`;
+    console.error(e);
+  }
+
+  loadingEl.style.display = 'none';
+  contentEl.style.display = 'block';
+}
+
+// ===== Markdown 渲染（提取 mermaid 代码块） =====
+function renderMarkdown(mdText) {
+  // 将 mermaid 代码块替换为占位符
+  const mermaidBlocks = [];
+  const processed = mdText.replace(/```mermaid\n([\s\S]*?)```/g, (match, code) => {
+    const id = `mermaid-placeholder-${mermaidBlocks.length}`;
+    mermaidBlocks.push({ id, code: code.trim() });
+    return `<div id="${id}" class="mermaid-placeholder"></div>`;
+  });
+
+  // 渲染 Markdown
+  let html = marked.parse(processed);
+
+  // 将占位符替换为 mermaid 容器
+  mermaidBlocks.forEach(({ id, code }) => {
+    html = html.replace(
+      `<div id="${id}" class="mermaid-placeholder"></div>`,
+      `<div class="mermaid-wrapper"><div class="mermaid" data-code="${encodeURIComponent(code)}">${escapeHtml(code)}</div></div>`
+    );
+  });
+
+  return html;
+}
+
+// ===== 渲染 Mermaid 图表 =====
+async function renderMermaidDiagrams(container) {
+  const diagrams = container.querySelectorAll('.mermaid');
+  if (diagrams.length === 0) return;
+
+  for (let i = 0; i < diagrams.length; i++) {
+    const el = diagrams[i];
+    const code = decodeURIComponent(el.dataset.code || el.textContent);
+    const id = `mermaid-diagram-${Date.now()}-${i}`;
+
+    try {
+      const { svg } = await mermaid.render(id, code);
+      el.innerHTML = svg;
+      el.removeAttribute('data-code');
+    } catch (e) {
+      el.innerHTML = `<div style="color:#f85149;font-size:12px;padding:8px;">图表渲染失败：${e.message}<br><pre style="font-size:11px;color:#8b949e;margin-top:8px;">${escapeHtml(code)}</pre></div>`;
+      console.warn('Mermaid render error:', e);
+    }
+  }
+}
+
+// ===== HTML 转义 =====
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ===== 搜索功能 =====
+const searchInput = document.getElementById('search-input');
+const searchResults = document.getElementById('search-results');
+
+const docMeta = [
+  { id: '01', title: 'GAS 整体架构概述' },
+  { id: '02', title: 'AbilitySystemComponent 核心组件' },
+  { id: '03', title: 'GameplayAbility 技能系统' },
+  { id: '04', title: 'AttributeSet 属性系统' },
+  { id: '05', title: 'GameplayEffect 效果系统' },
+  { id: '06', title: 'GameplayTag 标签系统' },
+  { id: '07', title: 'GameplayCue 表现层系统' },
+  { id: '08', title: 'AbilityTask 异步任务系统' },
+  { id: '09', title: '预测系统（Prediction）' },
+  { id: '10', title: 'AbilitySystemGlobals 全局配置' },
+  { id: '11', title: 'ExecutionCalculation 自定义计算' },
+];
+
+let searchTimer = null;
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(doSearch, 200);
+});
+
+searchInput.addEventListener('focus', () => {
+  if (searchInput.value.trim()) doSearch();
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#search-box') && !e.target.closest('#search-results')) {
+    searchResults.style.display = 'none';
+  }
+});
+
+function doSearch() {
+  const query = searchInput.value.trim().toLowerCase();
+  if (!query || query.length < 2) {
+    searchResults.style.display = 'none';
+    return;
+  }
+
+  const results = [];
+  docMeta.forEach(({ id, title }) => {
+    const content = docs[id] || '';
+    const lowerContent = content.toLowerCase();
+    const idx = lowerContent.indexOf(query);
+    if (idx !== -1 || title.toLowerCase().includes(query)) {
+      let excerpt = '';
+      if (idx !== -1) {
+        const start = Math.max(0, idx - 40);
+        const end = Math.min(content.length, idx + query.length + 80);
+        excerpt = content.slice(start, end)
+          .replace(/[#`*_\[\]]/g, '')
+          .replace(/\n/g, ' ')
+          .trim();
+        // 高亮关键词
+        const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        excerpt = excerpt.replace(re, '<mark>$1</mark>');
+      }
+      results.push({ id, title, excerpt });
+    }
+  });
+
+  if (results.length === 0) {
+    searchResults.innerHTML = '<div style="padding:16px;color:#6e7681;font-size:13px;text-align:center;">未找到相关内容</div>';
+  } else {
+    searchResults.innerHTML = results.slice(0, 8).map(r => `
+      <div class="search-result-item" onclick="loadDoc('${r.id}');searchResults.style.display='none';searchInput.value='';">
+        <div class="sr-title">${r.title}</div>
+        ${r.excerpt ? `<div class="sr-excerpt">${r.excerpt}</div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  searchResults.style.display = 'block';
+}
+
+// ===== 初始加载 =====
+window.addEventListener('load', () => {
+  loadDoc('index');
+});
+</script>
+</body>
+</html>
